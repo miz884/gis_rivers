@@ -36,15 +36,19 @@
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
     <script>
+
 var map;
 var marker;
 var rectangles;
 var kml_layer;
 var infowindow;
 
-var GET_RIVER_SERVICE_URL = 'http://mizba-gsi-project-94804.appspot.com/get_river?';
-var GET_RIVER_MESH_SERVICE_URL = 'http://mizba-gsi-project-94804.appspot.com/get_river_mesh?';
-var KML_BASE_URL = 'http://mizba-gsi-project-94804.appspot.com/kml/';
+var GET_RIVER_SERVICE_URL =
+    'http://mizba-gsi-project-94804.appspot.com/get_river?';
+var GET_RIVER_MESH_SERVICE_URL =
+    'http://mizba-gsi-project-94804.appspot.com/get_river_mesh?';
+var KML_BASE_URL =
+    'http://mizba-gsi-project-94804.appspot.com/kml/';
 
 var MIN_LAT = 35.33333333568889;
 var MIN_LNG = 139;
@@ -80,8 +84,18 @@ function initialize() {
       new google.maps.LatLng(MIN_LAT, MIN_LNG),
       new google.maps.LatLng(MAX_LAT, MAX_LNG))
   });
-  google.maps.event.addListener(targetArea, 'click', onClick);
+  google.maps.event.addListener(targetArea, 'click', function(click) {
+    selectPoint(click.latLng);
+    window.location.hash = click.latLng.lng() + '|' + click.latLng.lat();
+  });
   map.fitBounds(targetArea.getBounds());
+
+  if (window.location.hash) {
+    var m = window.location.hash.substr(1).match(/^(\d*\.\d*)\|(\d*\.\d*)$/);
+    if (m) {
+      selectPoint(new google.maps.LatLng(m[2], m[1]));
+    }
+  }
 }
 
 
@@ -93,12 +107,12 @@ function loadScript(url) {
   head.appendChild(script);
 }
 
-function onClick(click) {
-  console.log("click: " + click.latLng);
+function selectPoint(latLng) {
+  console.log("point: " + latLng);
   loadScript(GET_RIVER_SERVICE_URL +
-      'lat=' + click.latLng.lat() + '&lng=' + click.latLng.lng() +
+      'lat=' + latLng.lat() + '&lng=' + latLng.lng() +
       '&callback=getRiverCB');
-  marker.setPosition(click.latLng);
+  marker.setPosition(latLng);
   marker.setMap(map);
   infowindow.close();
   if (rectangles) {
