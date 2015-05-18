@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>雨のゆき先マップ 関東編</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      #title {
+        padding: 3px;
+        background: #fff;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 100;
+        font-family: sans-serif;
+      }
+      #title {
+        max-width: 400px;
+      }
+      #title div,
+      #title p {
+        font-size: 8pt;
+        padding: 0px;
+        margin: 1px;
+      }
+      h1 {
+        font-size: 15pt;
+        padding: 0px;
+        margin: 1px;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+var map;
+var marker;
+var rectangles;
+var kml_layer;
+var infowindow;
+
+var GET_RIVER_SERVICE_URL = 'http://mizba-gsi-project-94804.appspot.com/get_river?';
+var GET_RIVER_MESH_SERVICE_URL = 'http://mizba-gsi-project-94804.appspot.com/get_river_mesh?';
+var KML_BASE_URL = 'http://mizba-gsi-project-94804.appspot.com/kml/';
+
+var MIN_LAT = 35.33333333568889;
+var MIN_LNG = 139;
+var MAX_LAT = 36.000000002385164;
+var MAX_LNG = 140.00000000001108;
+
+function initialize() {
+  map = new google.maps.Map(document.getElementById('map-canvas'), {
+    zoom: 8,
+    center: new google.maps.LatLng((MIN_LAT+MAX_LAT)/2.0, (MIN_LNG+MAX_LNG)/2.0),
+    mapTypeId: google.maps.MapTypeId.TERRAIN,
+    zoomControlOptions: {
+      position: google.maps.ControlPosition.RIGHT
+    },
+    panControlOptions: {
+      position: google.maps.ControlPosition.RIGHT
+    },
+  });
+
+  marker = new google.maps.Marker();
+  kml_layer = new google.maps.KmlLayer({
+    preserveViewport: true,
+  });
+  infowindow = new google.maps.InfoWindow();
+
+  var targetArea = new google.maps.Rectangle({
+    strokeColor: '#FF0000',
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillOpacity: 0.0,
+    map: map,
+    bounds: new google.maps.LatLngBounds(
+      new google.maps.LatLng(MIN_LAT, MIN_LNG),
+      new google.maps.LatLng(MAX_LAT, MAX_LNG))
+  });
+  google.maps.event.addListener(targetArea, 'click', onClick);
+  map.fitBounds(targetArea.getBounds());
+}
+
+
+function loadScript(url) {
+  var head = document.getElementsByTagName('head')[0];
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = url;
+  head.appendChild(script);
+}
+
+function onClick(click) {
+  console.log("click: " + click.latLng);
+  loadScript(GET_RIVER_SERVICE_URL +
+      'lat=' + click.latLng.lat() + '&lng=' + click.latLng.lng() +
+      '&callback=getRiverCB');
+  marker.setPosition(click.latLng);
+  marker.setMap(map);
+  infowindow.close();
+  if (rectangles) {
+    for (i in rectangles) {
+      rectangles[i].setMap(null);
+    }
+    rectangles = []
+  }
+  kml_layer.setMap(null);
+}
+
+function getRiverCB(code, name, lng, lat, min_lng, min_lat, max_lng, max_lat) {
+  console.log("river code: " + code);
+  loadScript(GET_RIVER_MESH_SERVICE_URL +
+      'code=' + code + '&callback=getRiverMeshCB');
+  infowindow.setContent(name);
+  infowindow.open(map, marker);
+  kml_layer.setUrl(KML_BASE_URL + code + '.kml?'); //  + new Date().getTime());
+  kml_layer.setMap(map);
+}
+
+function getRiverMeshCB(mesh) {
+  rectangles = []
+  for (i in mesh) {
+    var p = mesh[i];
+    var rect = new google.maps.Rectangle({
+      strokeWeight: 0,
+      fillColor: '#FF0000',
+      fillOpacity: 0.35,
+      map: map,
+      bounds: new google.maps.LatLngBounds(
+        new google.maps.LatLng(p[1], p[0]),
+        new google.maps.LatLng(p[3], p[2]))
+    });
+    rectangles.push(rect);
+  }
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="title">
+      <h1>雨のゆき先マップ 関東編</h1>
+      <p><span>クリックした場所に降った雨が流れこむ川の名前、かたち、雨を集める範囲がわかります。
+        表示まで5秒くらいかかります。</span></p>
+      <p>このページは<a href="http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html">国土交通省の国土数値情 流域メッシュデータ</a> を利用しています。</p>
+    </div>
+    <div id="map-canvas"></div>
+  </body>
+</html>
+

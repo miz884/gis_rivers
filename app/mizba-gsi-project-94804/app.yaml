@@ -1,0 +1,29 @@
+application: mizba-gsi-project-94804
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: /kml
+  static_dir: kml
+
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /map\.html
+  static_files: map.html
+  upload: map\.html
+
+- url: /get_river
+  script: river_mesh.app
+
+- url: /get_river_mesh
+  script: river_mesh.app
+
+libraries:
+- name: webapp2
+  version: "2.5.2"
+- name: MySQLdb
+  version: "latest"
