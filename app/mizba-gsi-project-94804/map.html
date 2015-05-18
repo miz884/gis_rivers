@@ -135,17 +135,41 @@ function getRiverCB(code, name, lng, lat, min_lng, min_lat, max_lng, max_lat) {
 }
 
 function getRiverMeshCB(mesh) {
-  rectangles = []
-  for (i in mesh) {
+  if (mesh.length == 0) {
+    return;
+  }
+  var items = [];
+  var s = mesh[0][1];
+  var w = mesh[0][0];
+  var n = mesh[0][3];
+  var e = mesh[0][2];
+  var count = 0;
+  for (var i = 1; i < mesh.length; ++i) {
     var p = mesh[i];
+    if (n == p[3] && e == p[0] && e < p[2]) {
+      count++;
+      e = p[2];
+    } else {
+      items.push([new google.maps.LatLng(s, w),
+          new google.maps.LatLng(n, e)]);
+      s = p[1];
+      w = p[0];
+      n = p[3];
+      e = p[2];
+    }
+  }
+  items.push([new google.maps.LatLng(s, w),
+      new google.maps.LatLng(n, e)]);
+  console.log("efficiency: " + count);
+  rectangles = []
+  for (i in items) {
     var rect = new google.maps.Rectangle({
       strokeWeight: 0,
       fillColor: '#FF0000',
       fillOpacity: 0.35,
       map: map,
       bounds: new google.maps.LatLngBounds(
-        new google.maps.LatLng(p[1], p[0]),
-        new google.maps.LatLng(p[3], p[2]))
+        items[i][0], items[i][1])
     });
     rectangles.push(rect);
   }
