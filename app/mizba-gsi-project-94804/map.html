@@ -86,14 +86,14 @@ function initialize() {
   });
   google.maps.event.addListener(targetArea, 'click', function(click) {
     selectPoint(click.latLng);
-    window.location.hash = click.latLng.lng() + '|' + click.latLng.lat();
+    window.location.hash = click.latLng.lng() + '%7C' + click.latLng.lat();
   });
   map.fitBounds(targetArea.getBounds());
 
   if (window.location.hash) {
-    var m = window.location.hash.substr(1).match(/^(\d*\.\d*)\|(\d*\.\d*)$/);
+    var m = window.location.hash.substr(1).match(/^(\d*\.\d*)(\||%7C)(\d*\.\d*)$/);
     if (m) {
-      selectPoint(new google.maps.LatLng(m[2], m[1]));
+      selectPoint(new google.maps.LatLng(m[3], m[1]));
     }
   }
 }
