@@ -216,20 +216,31 @@ function getRiverMeshCB(mesh) {
   var prev = null;
   for (var i = 0; i < rects.length; ++i) {
     var curr = rects[i];
-    if (path.length > 0 && (
-        prev[_SE].lng() < curr[_SW].lng() ||
-        prev[_SW].lng() > curr[_SE].lng() ||
-        f_equals(prev[_SW].lat(), curr[_SW].lat()))) {
-      path.push(path[0]);
-      paths.push(path);
-      path = [];
+    if (prev) {
+      if (!f_equals(prev[_NW].lat(), curr[_SW].lat()) &&
+          prev[_NW].lat() < curr[_SW].lat()) {
+        if (path.length > 0) {
+          path.push(path[0]);
+          paths.push(path);
+          path = [];
+        }
+      } else if (prev[_SE].lng() < curr[_SW].lng() ||
+          prev[_SW].lng() > curr[_SE].lng())) {
+        paths.push([curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]]);
+        continue;
+      } else if(f_equals(prev[_SW].lat(), curr[_SW].lat())) {
+        paths.push(curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]);
+        continue;
+      }
     }
     path.push(curr[_SE], curr[_NE]);
     path.splice(0, 0, curr[_NW], curr[_SW]);
     prev = curr;
   }
-  path.push(path[0]);
-  paths.push(path);
+  if (path.length > 0) {
+    path.push(path[0]);
+    paths.push(path);
+  }
   debug("efficiency: " + paths.length + "/" + mesh.length + "=" +
       (paths.length / mesh.length));
   // rendering
