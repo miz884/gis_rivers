@@ -57,6 +57,7 @@ class RiverMesh(webapp2.RequestHandler):
     query = ('select min_lng, min_lat, max_lng, max_lat'
              ' from kanto_mesh'
              ' where river_code = %(code)s'
+             ' order by min_lat, min_lng'
             )
     cursor = db.cursor()
     cursor.execute(query, {'code':code})

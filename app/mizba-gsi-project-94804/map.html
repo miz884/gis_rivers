@@ -37,9 +37,27 @@
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
     <script>
 
+var DEBUG = false;
+if (window && window.location && window.location.protocol == "file:") {
+  DEBUG = true;
+}
+
+function debug(message) {
+  if (!DEBUG) { 
+    return;
+  }
+  console.log(message);
+}
+
+var E = 0.0001;
+function f_equals(f1, f2) {
+  return (Math.abs(f1 - f2) < E);
+}
+
+
 var map;
 var marker;
-var rectangles;
+var polygon;
 var kml_layer;
 var infowindow;
 
@@ -115,11 +133,8 @@ function selectPoint(latLng) {
   marker.setPosition(latLng);
   marker.setMap(map);
   infowindow.close();
-  if (rectangles) {
-    for (i in rectangles) {
-      rectangles[i].setMap(null);
-    }
-    rectangles = []
+  if (polygon) {
+    polygon.setMap(null);
   }
   kml_layer.setMap(null);
 }
@@ -134,45 +149,98 @@ function getRiverCB(code, name, lng, lat, min_lng, min_lat, max_lng, max_lat) {
   kml_layer.setMap(map);
 }
 
+var _SOUTH = 1;
+var _WEST = 0;
+var _NORTH = 3;
+var _EAST = 2;
+
+var _SW = 0;
+var _SE = 1;
+var _NE = 2;
+var _NW = 3;
+
 function getRiverMeshCB(mesh) {
   if (mesh.length == 0) {
     return;
   }
-  var items = [];
-  var s = mesh[0][1];
-  var w = mesh[0][0];
-  var n = mesh[0][3];
-  var e = mesh[0][2];
-  var count = 0;
+  // phase 1
+  var rects = [];
+  var s = mesh[0][_SOUTH];
+  var w = mesh[0][_WEST];
+  var n = mesh[0][_NORTH];
+  var e = mesh[0][_EAST];
   for (var i = 1; i < mesh.length; ++i) {
     var p = mesh[i];
-    if (n == p[3] && e == p[0] && e < p[2]) {
-      count++;
-      e = p[2];
+    if (f_equals(n, p[_NORTH]) && f_equals(e, p[_WEST]) && e < p[_EAST]) {
+      e = p[_EAST];
     } else {
-      items.push([new google.maps.LatLng(s, w),
-          new google.maps.LatLng(n, e)]);
-      s = p[1];
-      w = p[0];
-      n = p[3];
-      e = p[2];
+      rects.push([new google.maps.LatLng(s, w),
+          new google.maps.LatLng(s, e),
+          new google.maps.LatLng(n, e),
+          new google.maps.LatLng(n, w)]);
+      s = p[_SOUTH];
+      w = p[_WEST];
+      n = p[_NORTH];
+      e = p[_EAST];
     }
   }
-  items.push([new google.maps.LatLng(s, w),
-      new google.maps.LatLng(n, e)]);
-  console.log("efficiency: " + count);
-  rectangles = []
-  for (i in items) {
-    var rect = new google.maps.Rectangle({
-      strokeWeight: 0,
-      fillColor: '#FF0000',
-      fillOpacity: 0.35,
-      map: map,
-      bounds: new google.maps.LatLngBounds(
-        items[i][0], items[i][1])
-    });
-    rectangles.push(rect);
+  rects.push([new google.maps.LatLng(s, w),
+      new google.maps.LatLng(s, e),
+      new google.maps.LatLng(n, e),
+      new google.maps.LatLng(n, w)]);
+  debug("efficiency: " + rects.length + "/" + mesh.length + "=" +
+      (rects.length / mesh.length));
+  if (false && DEBUG) {
+    for (i in rects) {
+      var rect_opt = {
+        strokeColor: '#00FF00',
+        strokeWeight: 2.0,
+        fillColor: '#00FF00',
+        fillOpacity: 0.0,
+        zIndex: 100,
+        map: map,
+        bounds: new google.maps.LatLngBounds(
+          rects[i][_SW], rects[i][_NE])
+      };
+      var rect = new google.maps.Rectangle(rect_opt);
+      google.maps.event.addListener(rect, 'click', function(){
+        var ii = i;
+        return function(click) {
+        console.log(ii);
+      };}());
+    }
   }
+  // phase 2
+  var paths = [];
+  var path = [];
+  var prev = null;
+  for (var i = 0; i < rects.length; ++i) {
+    var curr = rects[i];
+    if (path.length > 0 && (
+        prev[_SE].lng() < curr[_SW].lng() ||
+        prev[_SW].lng() > curr[_SE].lng() ||
+        f_equals(prev[_SW].lat(), curr[_SW].lat()))) {
+      path.push(path[0]);
+      paths.push(path);
+      path = [];
+    }
+    path.push(curr[_SE], curr[_NE]);
+    path.splice(0, 0, curr[_NW], curr[_SW]);
+    prev = curr;
+  }
+  path.push(path[0]);
+  paths.push(path);
+  debug("efficiency: " + paths.length + "/" + mesh.length + "=" +
+      (paths.length / mesh.length));
+  // rendering
+ var poly_opt = {
+   strokeWeight: (DEBUG ? 1.0 : 0.0),
+   fillColor: '#FF0000',
+   fillOpacity: 0.35,
+   map: map,
+   paths: paths
+ };
+ polygon = new google.maps.Polygon(poly_opt);
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
