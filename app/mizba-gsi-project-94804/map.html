@@ -163,7 +163,9 @@ function getRiverMeshCB(mesh) {
   if (mesh.length == 0) {
     return;
   }
-  // phase 1
+
+  // phase 1:
+  // Merging squares horizontally if it's connecting each other.
   var rects = [];
   var s = mesh[0][_SOUTH];
   var w = mesh[0][_WEST];
@@ -190,6 +192,8 @@ function getRiverMeshCB(mesh) {
       new google.maps.LatLng(n, w)]);
   debug("efficiency: " + rects.length + "/" + mesh.length + "=" +
       (rects.length / mesh.length));
+
+  // showing border of rectangulars for debugging purpose.
   if (false && DEBUG) {
     for (i in rects) {
       var rect_opt = {
@@ -210,48 +214,63 @@ function getRiverMeshCB(mesh) {
       };}());
     }
   }
-  // phase 2
+
+  // phase 2:
+  // Merging rectangulars vertically.
   var paths = [];
-  var path = [];
-  var prev = null;
-  for (var i = 0; i < rects.length; ++i) {
-    var curr = rects[i];
-    if (prev) {
-      if (!f_equals(prev[_NW].lat(), curr[_SW].lat()) &&
-          prev[_NW].lat() < curr[_SW].lat()) {
-        if (path.length > 0) {
-          path.push(path[0]);
-          paths.push(path);
-          path = [];
+  var remainings = rects;
+  for (var loop = 0; (loop < 10 && remainings.length > 0); ++loop) {
+    debug("loop " + loop + " remainings " + remainings.length);
+    var path = [];
+    var prev = null;
+    var targets = remainings;
+    remainings = [];
+    for (var i = 0; i < targets.length; ++i) {
+      var curr = targets[i];
+      if (prev) {
+        if (!f_equals(prev[_NW].lat(), curr[_SW].lat()) &&
+            prev[_NW].lat() < curr[_SW].lat()) {
+          // if there is a gap between the previous and current rectangulars,
+          // it means that the northen line of the previous rect does not
+          // match to the southern line of the current rect,
+          // enclose the current path and start a new path.
+          if (path.length > 0) {
+            path.push(path[0]);
+            paths.push(path);
+            path = [];
+          }
+        } else if (prev[_SE].lng() < curr[_SW].lng() ||
+            prev[_SW].lng() > curr[_SE].lng() ||
+            f_equals(prev[_SW].lat(), curr[_SW].lat())) {
+          remainings.push(curr);
+          continue;
         }
-      } else if (prev[_SE].lng() < curr[_SW].lng() ||
-          prev[_SW].lng() > curr[_SE].lng())) {
-        paths.push([curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]]);
-        continue;
-      } else if(f_equals(prev[_SW].lat(), curr[_SW].lat())) {
-        paths.push(curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]);
-        continue;
       }
+      path.push(curr[_SE], curr[_NE]);
+      path.splice(0, 0, curr[_NW], curr[_SW]);
+      prev = curr;
     }
-    path.push(curr[_SE], curr[_NE]);
-    path.splice(0, 0, curr[_NW], curr[_SW]);
-    prev = curr;
+    if (path.length > 0) {
+      path.push(path[0]);
+      paths.push(path);
+    }
   }
-  if (path.length > 0) {
-    path.push(path[0]);
-    paths.push(path);
+  for (var i in remainings) {
+    var curr = remainings[i];
+    paths.push(curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]);
   }
   debug("efficiency: " + paths.length + "/" + mesh.length + "=" +
       (paths.length / mesh.length));
-  // rendering
- var poly_opt = {
-   strokeWeight: (DEBUG ? 1.0 : 0.0),
-   fillColor: '#FF0000',
-   fillOpacity: 0.35,
-   map: map,
-   paths: paths
- };
- polygon = new google.maps.Polygon(poly_opt);
+
+  // rendering polygons
+  var poly_opt = {
+    strokeWeight: (DEBUG ? 1.0 : 0.0),
+    fillColor: '#FF0000',
+    fillOpacity: 0.35,
+    map: map,
+    paths: paths
+  };
+  polygon = new google.maps.Polygon(poly_opt);
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
