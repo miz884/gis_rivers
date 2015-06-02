@@ -167,29 +167,24 @@ function getRiverMeshCB(mesh) {
   // phase 1:
   // Merging squares horizontally if it's connecting each other.
   var rects = [];
-  var s = mesh[0][_SOUTH];
-  var w = mesh[0][_WEST];
-  var n = mesh[0][_NORTH];
-  var e = mesh[0][_EAST];
+  var r = mesh[0];
   for (var i = 1; i < mesh.length; ++i) {
     var p = mesh[i];
-    if (f_equals(n, p[_NORTH]) && f_equals(e, p[_WEST]) && e < p[_EAST]) {
-      e = p[_EAST];
+    if (f_equals(r[_SOUTH], p[_SOUTH]) && f_equals(r[_NORTH], p[_NORTH]) &&
+        f_equals(r[_EAST], p[_WEST])) {
+      r[_EAST] = p[_EAST];
     } else {
-      rects.push([new google.maps.LatLng(s, w),
-          new google.maps.LatLng(s, e),
-          new google.maps.LatLng(n, e),
-          new google.maps.LatLng(n, w)]);
-      s = p[_SOUTH];
-      w = p[_WEST];
-      n = p[_NORTH];
-      e = p[_EAST];
+      rects.push([new google.maps.LatLng(r[_SOUTH], r[_WEST]),
+          new google.maps.LatLng(r[_SOUTH], r[_EAST]),
+          new google.maps.LatLng(r[_NORTH], r[_EAST]),
+          new google.maps.LatLng(r[_NORTH], r[_WEST])]);
+      r = p;
     }
   }
-  rects.push([new google.maps.LatLng(s, w),
-      new google.maps.LatLng(s, e),
-      new google.maps.LatLng(n, e),
-      new google.maps.LatLng(n, w)]);
+  rects.push([new google.maps.LatLng(r[_SOUTH], r[_WEST]),
+      new google.maps.LatLng(r[_SOUTH], r[_EAST]),
+      new google.maps.LatLng(r[_NORTH], r[_EAST]),
+      new google.maps.LatLng(r[_NORTH], r[_WEST])]);
   debug("efficiency: " + rects.length + "/" + mesh.length + "=" +
       (rects.length / mesh.length));
 
