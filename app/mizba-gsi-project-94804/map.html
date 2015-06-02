@@ -49,12 +49,6 @@ function debug(message) {
   console.log(message);
 }
 
-var E = 0.0001;
-function f_equals(f1, f2) {
-  return (Math.abs(f1 - f2) < E);
-}
-
-
 var map;
 var marker;
 var polygon;
@@ -149,113 +143,19 @@ function getRiverCB(code, name, lng, lat, min_lng, min_lat, max_lng, max_lat) {
   kml_layer.setMap(map);
 }
 
-var _SOUTH = 1;
-var _WEST = 0;
-var _NORTH = 3;
-var _EAST = 2;
-
-var _SW = 0;
-var _SE = 1;
-var _NE = 2;
-var _NW = 3;
-
-function getRiverMeshCB(mesh) {
-  if (mesh.length == 0) {
+function getRiverMeshCB(polys) {
+  if (polys.length == 0) {
     return;
   }
-
-  // phase 1:
-  // Merging squares horizontally if it's connecting each other.
-  var rects = [];
-  var r = mesh[0];
-  for (var i = 1; i < mesh.length; ++i) {
-    var p = mesh[i];
-    if (f_equals(r[_SOUTH], p[_SOUTH]) && f_equals(r[_NORTH], p[_NORTH]) &&
-        f_equals(r[_EAST], p[_WEST])) {
-      r[_EAST] = p[_EAST];
-    } else {
-      rects.push([new google.maps.LatLng(r[_SOUTH], r[_WEST]),
-          new google.maps.LatLng(r[_SOUTH], r[_EAST]),
-          new google.maps.LatLng(r[_NORTH], r[_EAST]),
-          new google.maps.LatLng(r[_NORTH], r[_WEST])]);
-      r = p;
-    }
-  }
-  rects.push([new google.maps.LatLng(r[_SOUTH], r[_WEST]),
-      new google.maps.LatLng(r[_SOUTH], r[_EAST]),
-      new google.maps.LatLng(r[_NORTH], r[_EAST]),
-      new google.maps.LatLng(r[_NORTH], r[_WEST])]);
-  debug("efficiency: " + rects.length + "/" + mesh.length + "=" +
-      (rects.length / mesh.length));
-
-  // showing border of rectangulars for debugging purpose.
-  if (false && DEBUG) {
-    for (i in rects) {
-      var rect_opt = {
-        strokeColor: '#00FF00',
-        strokeWeight: 2.0,
-        fillColor: '#00FF00',
-        fillOpacity: 0.0,
-        zIndex: 100,
-        map: map,
-        bounds: new google.maps.LatLngBounds(
-          rects[i][_SW], rects[i][_NE])
-      };
-      var rect = new google.maps.Rectangle(rect_opt);
-      google.maps.event.addListener(rect, 'click', function(){
-        var ii = i;
-        return function(click) {
-        console.log(ii);
-      };}());
-    }
-  }
-
-  // phase 2:
-  // Merging rectangulars vertically.
   var paths = [];
-  var remainings = rects;
-  for (var loop = 0; (loop < 10 && remainings.length > 0); ++loop) {
-    debug("loop " + loop + " remainings " + remainings.length);
+  for (var i in polys) {
+    var poly = polys[i];
     var path = [];
-    var prev = null;
-    var targets = remainings;
-    remainings = [];
-    for (var i = 0; i < targets.length; ++i) {
-      var curr = targets[i];
-      if (prev) {
-        if (!f_equals(prev[_NW].lat(), curr[_SW].lat()) &&
-            prev[_NW].lat() < curr[_SW].lat()) {
-          // if there is a gap between the previous and current rectangulars,
-          // it means that the northen line of the previous rect does not
-          // match to the southern line of the current rect,
-          // enclose the current path and start a new path.
-          if (path.length > 0) {
-            path.push(path[0]);
-            paths.push(path);
-            path = [];
-          }
-        } else if (prev[_SE].lng() < curr[_SW].lng() ||
-            prev[_SW].lng() > curr[_SE].lng() ||
-            f_equals(prev[_SW].lat(), curr[_SW].lat())) {
-          remainings.push(curr);
-          continue;
-        }
-      }
-      path.push(curr[_SE], curr[_NE]);
-      path.splice(0, 0, curr[_NW], curr[_SW]);
-      prev = curr;
+    for (var j in poly) {
+      path.push({lat:poly[j][0], lng:poly[j][1]});
     }
-    if (path.length > 0) {
-      path.push(path[0]);
-      paths.push(path);
-    }
+    paths.push(path);
   }
-  for (var i in remainings) {
-    var curr = remainings[i];
-    paths.push(curr[_SW], curr[_SE], curr[_NE], curr[_NW], curr[_SW]);
-  }
-  debug("efficiency: " + paths.length + "/" + mesh.length + "=" +
-      (paths.length / mesh.length));
 
   // rendering polygons
   var poly_opt = {
