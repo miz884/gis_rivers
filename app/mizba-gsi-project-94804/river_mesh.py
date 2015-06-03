@@ -51,6 +51,31 @@ class River(webapp2.RequestHandler):
 
     db.close()
 
+
+class Rect:
+  def __init__(self, south, west, north, east):
+    self.south = south
+    self.west = west
+    self.north = north
+    self.east = east
+
+  def connectHorizontally(self, target):
+    if (f_equals(self.south, target.south) and
+        f_equals(self.north, target.north) and
+        f_equals(self.east, target.west)):
+      self.east = target.east
+      return True
+    else:
+      return False
+
+  def toPolygonArray(self):
+    return ([[self.south, self.west],
+             [self.south, self.east],
+             [self.north, self.east],
+             [self.north, self.west],
+             [self.south, self.west]])
+
+
 class RiverMesh(webapp2.RequestHandler):
   def get(self):
     self.response.headers['Content-Type'] = 'text/javascript'
@@ -76,30 +101,25 @@ class RiverMesh(webapp2.RequestHandler):
             )
     cursor = db.cursor()
     cursor.execute(query, {'code':code})
+
+    # phase 1.
+    # Merging squares horizontally if it's connecting each other.
     rects = []
-    r = None
+    curr = None
     for row in cursor.fetchall():
-      p = [row[0], row[1], row[2], row[3]]
-      if not r:
-        r = p
+      target = Rect(row[_SOUTH], row[_WEST], row[_NORTH], row[_EAST])
+      if not curr:
+        curr = target
         continue
 
-      if (f_equals(r[_SOUTH], p[_SOUTH]) and f_equals(r[_NORTH], p[_NORTH]) and
-          f_equals(r[_EAST], p[_WEST])):
-        r[_EAST] = p[_EAST]
-      else:
-        rects.append([[r[_SOUTH], r[_WEST]],
-                      [r[_SOUTH], r[_EAST]],
-                      [r[_NORTH], r[_EAST]],
-                      [r[_NORTH], r[_WEST]],
-                      [r[_SOUTH], r[_WEST]]])
-        r = p
+      connected = curr.connectHorizontally(target)
+      if not connected:
+        rects.append(curr.toPolygonArray())
+        curr = target
 
-    rects.append([[r[_SOUTH], r[_WEST]],
-                  [r[_SOUTH], r[_EAST]],
-                  [r[_NORTH], r[_EAST]],
-                  [r[_NORTH], r[_WEST]],
-                  [r[_SOUTH], r[_WEST]]])
+    rects.append(curr.toPolygonArray())
+
+    # phase2
 
     self.response.write('%(callback)s && %(callback)s(%(json)s);\n'
                         % {'callback':str(callback), 'json':json.dumps(rects)})
