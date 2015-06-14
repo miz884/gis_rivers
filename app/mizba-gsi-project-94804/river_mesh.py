@@ -2,21 +2,8 @@ import MySQLdb
 import os
 import webapp2
 import json
+import polygon
 
-E = 0.0001
-
-_SOUTH = 1;
-_WEST = 0;
-_NORTH = 3;
-_EAST = 2;
-
-_SW = 0;
-_SE = 1;
-_NE = 2;
-_NW = 3;
-
-def f_equals(f0, f1):
-  return -E < (f0 - f1) and (f0 - f1) < E
 
 class River(webapp2.RequestHandler):
   def get(self):
@@ -52,30 +39,6 @@ class River(webapp2.RequestHandler):
     db.close()
 
 
-class Rect:
-  def __init__(self, south, west, north, east):
-    self.south = south
-    self.west = west
-    self.north = north
-    self.east = east
-
-  def connectHorizontally(self, target):
-    if (f_equals(self.south, target.south) and
-        f_equals(self.north, target.north) and
-        f_equals(self.east, target.west)):
-      self.east = target.east
-      return True
-    else:
-      return False
-
-  def toPolygonArray(self):
-    return ([[self.south, self.west],
-             [self.south, self.east],
-             [self.north, self.east],
-             [self.north, self.west],
-             [self.south, self.west]])
-
-
 class RiverMesh(webapp2.RequestHandler):
   def get(self):
     self.response.headers['Content-Type'] = 'text/javascript'
@@ -104,25 +67,15 @@ class RiverMesh(webapp2.RequestHandler):
 
     # phase 1.
     # Merging squares horizontally if it's connecting each other.
-    rects = []
-    curr = None
-    for row in cursor.fetchall():
-      target = Rect(row[_SOUTH], row[_WEST], row[_NORTH], row[_EAST])
-      if not curr:
-        curr = target
-        continue
-
-      connected = curr.connectHorizontally(target)
-      if not connected:
-        rects.append(curr.toPolygonArray())
-        curr = target
-
-    rects.append(curr.toPolygonArray())
+    polys = polygon.PolyMerger.mergeSquares(cursor);
 
     # phase2
+    result = polygon.PolyMerger.mergePolys(polys)
 
     self.response.write('%(callback)s && %(callback)s(%(json)s);\n'
-                        % {'callback':str(callback), 'json':json.dumps(rects)})
+                        % {'callback':str(callback),
+                           'json':json.dumps(map(lambda x:x.toPolygonArray(),
+                                                 result))})
     db.close()
 
 
