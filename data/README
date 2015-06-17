@@ -1,0 +1,29 @@
+===============
+Data location
+===============
+
+
+W05: 
+river flow path line data.
+http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W05.html
+
+W07: 
+river basin area mesh data.
+http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html
+
+
+===============
+How to import data into Google Cloud SQL?
+===============
+
+01. Create tables
+Before importing data, you need to create tables to import data.
+You can create tables by importing a SQL file which contians DDLs.
+
+01-01. Upload db_schema.sql to Cloud Storage.
+01-02. Import it into Cloud SQL as a SQL.
+
+02. Import data
+
+02-01. Upload CSV files to Cloud Storage.
+02-02. Import it into Cloud SQL as CSV files
