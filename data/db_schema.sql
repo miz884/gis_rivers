@@ -1,4 +1,6 @@
 USE kanto_rivers;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
 
 -- create table kanto_mesh (
 --   river_code VARCHAR(10),
@@ -11,14 +13,17 @@ USE kanto_rivers;
 -- create index river_code_i on kanto_mesh(river_code);
 
 
-DROP TABLE IF EXISTS compact_kanto_mesh;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
+-- DROP TABLE IF EXISTS compact_kanto_mesh;
+-- CREATE TABLE compact_kanto_mesh (
+--   modified_mesh_code BIGINT,
+--   river_code         BIGINT,
+-- KEY idx_mesh_code (modified_mesh_code),
+-- KEY idx_river_code (river_code)
+-- ) DEFAULT CHARSET=utf8;
 
-CREATE TABLE compact_kanto_mesh (
-  modified_mesh_code BIGINT,
-  river_code         BIGINT,
-KEY idx_mesh_code (modified_mesh_code),
+CREATE TABLE river_codes (
+  river_code BIGINT,
+  name       VARCHAR(50),
 KEY idx_river_code (river_code)
 ) DEFAULT CHARSET=utf8;
 
