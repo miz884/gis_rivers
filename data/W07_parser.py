@@ -1,68 +1,62 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os.path
 import sys
+import re
 import codecs
-import xml.sax
-import xml.sax.handler
-
-# output in CSV format.
-# 河川コード,河川名,min_lng,min_lat,max_lng,max_lat
 
 sys.stdout = codecs.getwriter('utf_8')(sys.stdout)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '../web_root/lib'))
 
-class SaxHandler(xml.sax.handler.ContentHandler):
-  def __init__(self):
-    self.items = [0] * 6
-    self.itemIndex = -1
-    self.text = ''
+from mesh_code import *
 
-  def startElement(self, name, attrs):
-    if name == 'Placemark':
-      self.items = [0] * 6
-      self.itemIndex = -1
-      self.text = ''
-      return
-    if name =='SimpleData' and attrs.getValue('name') == 'W07_003':
-      self.itemIndex = 0
-      self.text = ''
-      return
-    if name =='SimpleData' and attrs.getValue('name') == 'W07_005':
-      self.itemIndex = 1
-      self.text = ''
-      return
-    if name =='coordinates':
-      self.text = ''
-      return
-
-  def endElement(self, name):
-    if name == 'Placemark':
-      print ','.join(self.items)
-      return
-    if name =='SimpleData' and self.itemIndex >= 0:
-      self.items[self.itemIndex] = self.text
-      self.itemIndex = -1
-      return
-    if name =='coordinates':
-      lls = self.text.split()
-      (min_lng, min_lat) = lls[0].split(',')
-      (max_lng, max_lat) = lls[2].split(',')
-      self.items[2] = min_lng
-      self.items[3] = min_lat
-      self.items[4] = max_lng
-      self.items[5] = max_lat
-      return
-  
-  def characters(self, content):
-    self.text += content
-    return
+RESULT_FILE = '/tmp/W07_river_mesh.csv'
 
 def main():
-  parser = xml.sax.make_parser()
-  parser.setContentHandler(SaxHandler())
-  parser.setFeature(xml.sax.handler.feature_namespaces, False)
-  parser.parse(sys.stdin)
-  return
-  
+  if not os.path.isfile(RESULT_FILE):
+    f = open(RESULT_FILE, 'w')
+  else:
+    f = open(RESULT_FILE, 'a')
+
+  for line in sys.stdin:
+    line = line.strip()
+    '''
+    Data format:
+    -----------------------------------
+    <ksj:ValleyMesh gml:id="fi_1">
+        <gml:domainSet xlink:href="#grid"/>
+        <gml:rangeSet>
+                <gml:DataBlock>
+                        <gml:rangeParameters xlink:href="#recordType"/>
+                        <gml:tupleList>
+    5339000000,140019,1400190001,酒匂川,鮎沢川,42
+    5339000001,140019,1400190001,酒匂川,鮎沢川,41
+    ...
+    5339000098,140019,1400190000,酒匂川,畑沢,39
+    5339000099,140019,1400190000,酒匂川,畑沢,39
+                        </gml:tupleList>
+                </gml:DataBlock>
+        </gml:rangeSet>
+        <gml:coverageFunction>
+                <gml:GridFunction>
+                        <gml:sequenceRule axisOrder="+1 +2">Linear</gml:sequenceRule>
+                        <gml:startPoint>0 0</gml:startPoint>
+                </gml:GridFunction>
+        </gml:coverageFunction>
+        <ksj:tertiaryMeshCode>53390000</ksj:tertiaryMeshCode>
+    </ksj:ValleyMesh>
+    -----------------------------------
+    '''
+    match = re.match(r'^(\d*),(\d*),(\d*),([^,]*),([^,]*),(\d*)$', line)
+    if match:
+      mesh_code = match.group(1)
+      river_code = match.group(3)
+      modified_mesh_code = meshCodeToModifiedMeshCode(mesh_code)
+      f.write('%d,%s\n' % (modified_mesh_code, river_code))
+
+  f.close()
+
 if __name__=="__main__":
   main()
+
