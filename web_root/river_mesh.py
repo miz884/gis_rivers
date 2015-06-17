@@ -3,14 +3,15 @@ import os
 import webapp2
 import json
 import polygon
+import mesh_code
 
 
 class River(webapp2.RequestHandler):
   def get(self):
     self.response.headers['Content-Type'] = 'text/javascript'
 
-    lat = str(self.request.get('lat'))
-    lng = str(self.request.get('lng'))
+    lat = float(self.request.get('lat'))
+    lng = float(self.request.get('lng'))
     callback = str(self.request.get('callback', 'callback'))
 
     if (lat == '' or lng == ''):
@@ -24,17 +25,18 @@ class River(webapp2.RequestHandler):
     else:
       db = MySQLdb.connect(host='localhost', user='root')
 
-    query = ('select river_code, river_name, min_lng, min_lat, max_lng, max_lat'
-             ' from kanto_mesh'
-             ' where %(lat)s between min_lat and max_lat'
-             ' and %(lng)s between min_lng and max_lng'
+    query = ('select mesh.modified_mesh_code, mesh.river_code, river.name'
+             ' from compact_kanto_mesh as mesh'
+             ' join river_codes as river'
+             ' on mesh.river_code = river.river_code'
+             ' where mesh.modified_mesh_code = %(modified_mesh_code)s'
             )
+    modified_mesh_code = mesh_code.latLngToModifiedMeshCode(lat, lng)
     cursor = db.cursor()
-    cursor.execute(query, {'lat':lat, 'lng':lng})
+    cursor.execute(query, {'modified_mesh_code': modified_mesh_code})
     for row in cursor.fetchall():
-      self.response.write('%s && %s("%s", "%s", %s, %s, %f, %f, %f, %f);\n'
-                          % (str(callback), str(callback), row[0], row[1],
-                             lng, lat, row[2], row[3], row[4], row[5]))
+      self.response.write('%s && %s("%s", %d);\n'
+                          % (str(callback), str(callback), row[2], row[1]))
 
     db.close()
 
