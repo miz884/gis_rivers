@@ -11,39 +11,53 @@ def f_equals(f0, f1):
 class TestMesh(unittest.TestCase):
 
   def test_meshCodeToSWNE(self):
-    result = meshCodeToSWNE(53394547)
+    result = meshCodeToSWNE(5339454701)
 
     self.assertEquals(result[0], 35.7000)
-    self.assertEquals(result[1], 139.7125)
+    self.assertEquals(result[1], 139.71375)
 
-    # the height of rect should be 30"
-    self.assertTrue(f_equals(result[2] - result[0], 30.0 / 60.0 / 60.0))
+    # the height of rect should be 3"
+    self.assertTrue(f_equals(result[2] - result[0], 3.0 / 60.0 / 60.0))
 
-    # the width of rect should be 45"
-    self.assertTrue(f_equals(result[3] - result[1], 45.0 / 60.0 / 60.0))
+    # the width of rect should be 4.5"
+    self.assertTrue(f_equals(result[3] - result[1], 4.5 / 60.0 / 60.0))
+
+    # check (+1, 0) rect
+    result0 = meshCodeToSWNE(5339454701)
+    result1 = meshCodeToSWNE(5339454711)
+    self.assertEquals(result0[1], result1[1]) # w0 == w1
+    self.assertEquals(result0[3], result1[3]) # e0 == e1
+    self.assertEquals(result0[2], result1[0]) # n0 == s1
+
+    # check (0, +1) rect
+    result0 = meshCodeToSWNE(5339454701)
+    result1 = meshCodeToSWNE(5339454702)
+    self.assertEquals(result0[0], result1[0]) # s0 == s1
+    self.assertEquals(result0[2], result1[2]) # n0 == n1
+    self.assertEquals(result0[3], result1[1]) # e0 == w1
 
     # The NE should be equal to SW of (+1, +1) rect.
-    result0 = meshCodeToSWNE(53394547)
-    result1 = meshCodeToSWNE(53394558)
-    self.assertEquals(result0[2], result1[0])
-    self.assertEquals(result0[3], result1[1])
+    result0 = meshCodeToSWNE(5339454701)
+    result1 = meshCodeToSWNE(5339454712)
+    self.assertEquals(result0[2], result1[0]) # n0 == s1
+    self.assertEquals(result0[3], result1[1]) # e0 == w1
 
 
   def test_latLngToMeshCode(self):
     result = latLngToMeshCode(35.70078, 139.71475)
-    self.assertEquals(result, 53394547)
+    self.assertEquals(result, 5339454701)
 
     result = latLngToMeshCode(35.69999999999999999999999999, 139.7125)
-    self.assertEquals(result, 53394547)
+    self.assertEquals(result, 5339454700)
 
     result = latLngToMeshCode(
       Decimal(357000) / Decimal(10000),
-      Decimal(1397125) / Decimal(10000))
-    self.assertEquals(result, 53394547)
+      Decimal(13971475) / Decimal(100000))
+    self.assertEquals(result, 5339454701)
 
 
   def test_refrexive(self):
-    code = 53394547
+    code = 5339454701
     # code -> latlng -> code
     result0 = meshCodeToSWNE(code)
     result1 = latLngToMeshCode(result0[0], result0[1])
@@ -56,30 +70,30 @@ class TestMesh(unittest.TestCase):
 
 
   def test_modifiedMeshCodeToMeshCode(self):
-    result = modifiedMeshCodeToMeshCode(12345678)
-    self.assertEquals(result, 12563748)
+    result = modifiedMeshCodeToMeshCode(1234567890)
+    self.assertEquals(result, 1267384950)
 
-    result = modifiedMeshCodeToMeshCode(53443957)
-    self.assertEquals(result, 53394547)
+    result = modifiedMeshCodeToMeshCode(5344039571)
+    self.assertEquals(result, 5339454701)
 
 
   def test_meshCodeToModifiedMeshCode(self):
-    result = meshCodeToModifiedMeshCode(12345678)
-    self.assertEquals(result, 12573468)
+    result = meshCodeToModifiedMeshCode(1234567890)
+    self.assertEquals(result, 1257934680)
 
-    result = meshCodeToModifiedMeshCode(53394547)
-    self.assertEquals(result, 53443957)
+    result = meshCodeToModifiedMeshCode(5339454701)
+    self.assertEquals(result, 5344039571)
 
 
   def test_modifiedMeshCodeToSWNE(self):
-    result = modifiedMeshCodeToSWNE(53443957)
+    result = modifiedMeshCodeToSWNE(5344039571)
     self.assertEquals(result[0], 35.7000)
-    self.assertEquals(result[1], 139.7125)
+    self.assertEquals(result[1], 139.71375)
 
 
   def test_latLngToModifiedMeshCode(self):
-    result = latLngToModifiedMeshCode(35.70078, 139.71475)
-    self.assertEquals(result, 53443957)
+    result = latLngToModifiedMeshCode(35.70078, 139.71375)
+    self.assertEquals(result, 5344039571)
 
 
 if __name__ == '__main__':
