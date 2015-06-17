@@ -39,19 +39,19 @@ e.g.
 
 '''
 
-eog = logging.getLogger('mesh_code')
-
 d100 = Decimal(100)
 d60 = Decimal(60)
 d45 = Decimal(45)
 d40 = Decimal(40)
 d30 = Decimal(30)
+d10 = Decimal(10)
 d7_5 = (Decimal(75) / Decimal(10))
 d5 = Decimal(5)
 d1 = Decimal(1)
 
 
-def meshCodeToModifiedMeshCode(code):
+def meshCodeToModifiedMeshCode(mesh_code):
+  code = int(mesh_code)
   # from ppuuqvrw to ppqruuvw
   w = Decimal(code % 10)
   code /= 10
@@ -66,21 +66,22 @@ def meshCodeToModifiedMeshCode(code):
   p = Decimal(code)
 
   result = p
-  result *= 10
+  result *= d10
   result += q
-  result *= 10
+  result *= d10
   result += r
-  result *= 100
+  result *= d100
   result += u
-  result *= 10
+  result *= d10
   result += v
-  result *= 10
+  result *= d10
   result += w
 
   return int(result)
 
 
-def modifiedMeshCodeToMeshCode(code):
+def modifiedMeshCodeToMeshCode(modified_mesh_code):
+  code = int(modified_mesh_code)
   # from ppqruuvw to ppuuqvrw
   w = Decimal(code % 10)
   code /= 10
@@ -95,15 +96,15 @@ def modifiedMeshCodeToMeshCode(code):
   p = Decimal(code)
 
   result = p
-  result *= 100
+  result *= d100
   result += u
-  result *= 10
+  result *= d10
   result += q
-  result *= 10
+  result *= d10
   result += v
-  result *= 10
+  result *= d10
   result += r
-  result *= 10
+  result *= d10
   result += w
 
   return int(result)
@@ -120,7 +121,7 @@ def latLngToModifiedMeshCode(lat, lng):
 
 
 def meshCodeToSWNE(mesh_code):
-  code = mesh_code
+  code = int(mesh_code)
   w = Decimal(code % 10)
   code /= 10
   r = Decimal(code % 10)
@@ -170,17 +171,16 @@ def latLngToMeshCode(lat, lng):
   w = t // d45
 
   result = p
-  result *= 100
+  result *= d100
   result += u
-  result *= 10
+  result *= d10
   result += q
-  result *= 10
+  result *= d10
   result += v
-  result *= 10
+  result *= d10
   result += r
-  result *= 10
+  result *= d10
   result += w
 
   return int(result)
-
 
