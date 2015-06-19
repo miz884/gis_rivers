@@ -108,6 +108,7 @@ class Poly:
     self.west = None
     self.north = None
     self.east = None
+    self.root = None
     self.finalized = False
 
   @staticmethod
@@ -119,6 +120,7 @@ class Poly:
     _poly.west = rect.west
     _poly.north = rect.north
     _poly.east = rect.east
+    _poly.root = _poly
     return _poly
 
   def updateCoords(self):
@@ -134,6 +136,8 @@ class Poly:
     return (self.west < target.east and
             self.east > target.west)
 
+  # @param polys The array of poly in the next line.
+  # @return True if any poly in polys are touching this Poly, False otherwise.
   def addPolys(self, polys):
     if self.finalized:
       raise Exception('Already finalized')
@@ -147,8 +151,11 @@ class Poly:
       else:
         target.path.tail.next.next.connectPrev(self.path.tail.prev)
       self.path.tail.connectPrev(target.path.tail.next)
+      if target.root.south > self.root.south:
+        target.root = self.root
       target.updateCoords()
     self.updateCoords()
+
     return isTouchingAnything
 
   def finalize(self):
@@ -169,6 +176,9 @@ class Poly:
         break
       curr = curr.prev
     return result
+
+  def isSamePoly(self, target):
+    return self.root == target.root
 
 
 class PolyMerger:
@@ -194,6 +204,7 @@ class PolyMerger:
 
   @staticmethod
   def mergePolys(polys):
+    results = []
     prev = None
     curr = []
     for poly in polys:
@@ -206,13 +217,21 @@ class PolyMerger:
         for poly0 in prev:
           if (not poly0.addPolys(curr)):
             poly0.finalize()
+            results[:] = [x for x in results if not x.isSamePoly(poly0)]
+            results.append(poly0)
         prev = curr
         curr = [poly]
 
     if not prev is None:
-      for poly in prev:
-        if (not poly.addPolys(curr)):
-          poly.finalize()
+      for poly0 in prev:
+        if (not poly0.addPolys(curr)):
+          poly0.finalize()
+          results[:] = [x for x in results if not x.isSamePoly(poly0)]
+          results.append(poly0)
 
-    return curr
+    for poly0 in curr:
+      results[:] = [x for x in results if not x.isSamePoly(poly0)]
+
+    results.extend(curr)
+    return results
 
