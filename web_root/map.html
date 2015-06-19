@@ -133,12 +133,16 @@ function selectPoint(latLng) {
 
 function getRiverCB(name, code) {
   console.log("river code: " + code);
-  loadScript(GET_RIVER_MESH_SERVICE_URL +
-      'code=' + code + '&callback=getRiverMeshCB');
+  if (!name) {
+    name = 'unknown'
+  } else {
+    loadScript(GET_RIVER_MESH_SERVICE_URL +
+        'code=' + code + '&callback=getRiverMeshCB');
+    kml_layer.setUrl(KML_BASE_URL + code + '.kml?'); //  + new Date().getTime());
+    kml_layer.setMap(map);
+  }
   infowindow.setContent(name);
   infowindow.open(map, marker);
-  kml_layer.setUrl(KML_BASE_URL + code + '.kml?'); //  + new Date().getTime());
-  kml_layer.setMap(map);
 }
 
 function getRiverMeshCB(polys) {

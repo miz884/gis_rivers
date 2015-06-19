@@ -25,18 +25,22 @@ class River(webapp2.RequestHandler):
     else:
       db = MySQLdb.connect(host='localhost', user='root')
 
-    query = ('select mesh.modified_mesh_code, mesh.river_code, river.name'
+    query = ('select river.name, mesh.river_code '
              ' from compact_kanto_mesh as mesh'
-             ' join river_codes as river'
+             ' left join river_codes as river'
              ' on mesh.river_code = river.river_code'
              ' where mesh.modified_mesh_code = %(modified_mesh_code)s'
             )
     modified_mesh_code = mesh_code.latLngToModifiedMeshCode(lat, lng)
     cursor = db.cursor()
-    cursor.execute(query, {'modified_mesh_code': modified_mesh_code})
-    for row in cursor.fetchall():
-      self.response.write('%s && %s("%s", %d);\n'
-                          % (str(callback), str(callback), row[2], row[1]))
+    count = cursor.execute(query, {'modified_mesh_code': modified_mesh_code})
+
+    if count > 0:
+      for row in cursor.fetchall():
+        self.response.write('%s && %s("%s", %d);\n'
+                            % (str(callback), str(callback), row[0], row[1]))
+    else:
+      self.response.write('%s && %s(null);\n' % (str(callback), str(callback)))
 
     db.close()
 
