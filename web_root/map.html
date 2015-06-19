@@ -65,6 +65,10 @@ var MIN_LNG = 139;
 var MAX_LAT = 36.000000002385164;
 var MAX_LNG = 140.00000000001108;
 
+var getRiverCBName = null;
+var getRiverMeshCBName = null;
+var CBs = [];
+
 function initialize() {
   map = new google.maps.Map(document.getElementById('map-canvas'), {
     zoom: 8,
@@ -108,7 +112,6 @@ function initialize() {
   }
 }
 
-
 function loadScript(url) {
   var head = document.getElementsByTagName('head')[0];
   var script = document.createElement('script');
@@ -118,17 +121,24 @@ function loadScript(url) {
 }
 
 function selectPoint(latLng) {
-  console.log("point: " + latLng);
-  loadScript(GET_RIVER_SERVICE_URL +
-      'lat=' + latLng.lat() + '&lng=' + latLng.lng() +
-      '&callback=getRiverCB');
-  marker.setPosition(latLng);
-  marker.setMap(map);
-  infowindow.close();
+  // hidden overlays
   if (polygon) {
     polygon.setMap(null);
   }
   kml_layer.setMap(null);
+  // setup callback
+  if (getRiverCBName) {
+    CBs[getRiverCBName] = null;
+  }
+  getRiverCBName = 'cb' + (new Date()).getTime();
+  CBs[getRiverCBName] = getRiverCB;
+  console.log("point: " + latLng);
+  loadScript(GET_RIVER_SERVICE_URL +
+      'lat=' + latLng.lat() + '&lng=' + latLng.lng() +
+      '&callback=CBs.' + getRiverCBName);
+  marker.setPosition(latLng);
+  marker.setMap(map);
+  infowindow.close();
 }
 
 function getRiverCB(name, code) {
@@ -136,8 +146,14 @@ function getRiverCB(name, code) {
   if (!name) {
     name = 'unknown'
   } else {
+    // setup callback
+    if (getRiverMeshCBName) {
+      CBs[getRiverMeshCBName] = null;
+    }
+    getRiverMeshCBName = 'cb' + (new Date()).getTime();
+    CBs[getRiverMeshCBName] = getRiverMeshCB;
     loadScript(GET_RIVER_MESH_SERVICE_URL +
-        'code=' + code + '&callback=getRiverMeshCB');
+        'code=' + code + '&callback=CBs.' + getRiverMeshCBName);
     kml_layer.setUrl(KML_BASE_URL + code + '.kml?'); //  + new Date().getTime());
     kml_layer.setMap(map);
   }
@@ -167,6 +183,9 @@ function getRiverMeshCB(polys) {
     map: map,
     paths: paths
   };
+  if (polygon) {
+    polygon.setMap(null);
+  }
   polygon = new google.maps.Polygon(poly_opt);
 }
 
