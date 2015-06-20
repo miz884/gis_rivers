@@ -53,78 +53,32 @@ d1 = Decimal(1)
 
 
 def meshCodeToModifiedMeshCode(mesh_code):
-  code = int(mesh_code)
   # from ppuuqvrwsx to ppqrsuuvwx
-  x = Decimal(code % 10)
-  code /= 10
-  s = Decimal(code % 10)
-  code /= 10
-  w = Decimal(code % 10)
-  code /= 10
-  r = Decimal(code % 10)
-  code /= 10
-  v = Decimal(code % 10)
-  code /= 10
-  q = Decimal(code % 10)
-  code /= 10
-  u = Decimal(code % 100)
-  code /= 100
-  p = Decimal(code)
-
-  result = p
-  result *= d10
-  result += q
-  result *= d10
-  result += r
-  result *= d10
-  result += s
-  result *= d100
-  result += u
-  result *= d10
-  result += v
-  result *= d10
-  result += w
-  result *= d10
-  result += x
-
+  code = ('0' + str(int(mesh_code)))[-10:]
+  result = (
+    code[0:2] +
+    code[4:5] +
+    code[6:7] +
+    code[8:9] +
+    code[2:4] +
+    code[5:6] +
+    code[7:8] +
+    code[9:10])
   return int(result)
 
 
 def modifiedMeshCodeToMeshCode(modified_mesh_code):
-  code = int(modified_mesh_code)
+  code = ('0' + str(int(modified_mesh_code)))[-10:]
   # from ppqrsuuvwx to ppuuqvrwsx
-  x = Decimal(code % 10)
-  code /= 10
-  w = Decimal(code % 10)
-  code /= 10
-  v = Decimal(code % 10)
-  code /= 10
-  u = Decimal(code % 100)
-  code /= 100
-  s = Decimal(code % 10)
-  code /= 10
-  r = Decimal(code % 10)
-  code /= 10
-  q = Decimal(code % 10)
-  code /= 10
-  p = Decimal(code)
-
-  result = p
-  result *= d100
-  result += u
-  result *= d10
-  result += q
-  result *= d10
-  result += v
-  result *= d10
-  result += r
-  result *= d10
-  result += w
-  result *= d10
-  result += s
-  result *= d10
-  result += x
-
+  result = (
+    code[0:2] +
+    code[5:7] +
+    code[2:3] +
+    code[7:8] +
+    code[3:4] +
+    code[8:9] +
+    code[4:5] +
+    code[9:10])
   return int(result)
 
 
