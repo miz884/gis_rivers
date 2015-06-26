@@ -58,7 +58,7 @@ var infowindow;
 var BASE_URL = 'http://4.mizba-gsi-project-94804.appspot.com';
 var GET_RIVER_SERVICE_URL = BASE_URL + '/get_river?';
 var GET_RIVER_MESH_SERVICE_URL = BASE_URL + '/get_river_mesh?';
-var KML_BASE_URL = BASE_URL + '/kml/';
+var KMZ_BASE_URL = 'https://storage.googleapis.com/gis_rivers/river_path/';
 
 var MIN_LAT = 35.33333333568889;
 var MIN_LNG = 139;
@@ -154,7 +154,7 @@ function getRiverCB(name, code) {
     CBs[getRiverMeshCBName] = getRiverMeshCB;
     loadScript(GET_RIVER_MESH_SERVICE_URL +
         'code=' + code + '&callback=CBs.' + getRiverMeshCBName);
-    kml_layer.setUrl(KML_BASE_URL + code + '.kml?'); //  + new Date().getTime());
+    kml_layer.setUrl(KMZ_BASE_URL + code + '.kmz?'); //  + new Date().getTime());
     kml_layer.setMap(map);
   }
   infowindow.setContent(name);

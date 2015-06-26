@@ -2,23 +2,17 @@
 
 function parse {
   echo "parsing ${1}..."
-  cat ${1} | python W05_parser.py
+  target=$(basename ${1} | sed -e 's/_GML.zip/-g.xml/')
+  unzip -c ${1} ${target} | python ./W05_parser.py
 }
 export -f parse
 
-function finalize {
-  echo '</Document></kml>' >> ${1}
-}
-export -f finalize
-
-if [ -d /tmp/kml ]; then
-  echo "/tmp/kml already exists."  >&2
+if [ -d /tmp/W05_river_path ]; then
+  echo "/tmp/W05_river_path already exists."  >&2
   exit
 fi
+mkdir /tmp/W05_river_path
 
-mkdir /tmp/kml
-find . -name '*_Stream.kml' -exec bash -c "parse {}" \;
+find . -name 'W05*.zip' -exec bash -c "parse {}" \;
 
-echo "finalizing..."
-find /tmp/kml -name '*.kml' -exec bash -c "finalize {}" \;
 
