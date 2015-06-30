@@ -179,7 +179,15 @@ class Poly:
     return result
 
   def isSamePoly(self, target):
-    return self.group == target.group
+    if self.group == target.group:
+      return True
+    else:
+      curr = self.path.head
+      while (curr and curr != self.path.tail):
+        if curr == target.path.head:
+          return True
+        curr = curr.prev
+      return False
 
 
 class PolyMerger:
