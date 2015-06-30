@@ -1,5 +1,4 @@
 import math
-from decimal import *
 import logging
 
 # cf. http://www.stat.go.jp/data/mesh/pdf/gaiyo1.pdf
@@ -38,19 +37,6 @@ e.g.
 --> 5344 3957
 
 '''
-
-d100 = Decimal(100)
-d60 = Decimal(60)
-d45 = Decimal(45)
-d40 = Decimal(40)
-d30 = Decimal(30)
-d10 = Decimal(10)
-d7_5 = (Decimal(75) / Decimal(10))
-d5 = Decimal(5)
-d4_5 = (Decimal(45) / Decimal(10))
-d3 = Decimal(3)
-d1 = Decimal(1)
-
 
 def meshCodeToModifiedMeshCode(mesh_code):
   # from ppuuqvrwsx to ppqrsuuvwx
@@ -93,79 +79,73 @@ def latLngToModifiedMeshCode(lat, lng):
 
 
 def meshCodeToSWNE(mesh_code):
-  code = int(mesh_code)
-  x = Decimal(code % 10)
-  code /= 10
-  s = Decimal(code % 10)
-  code /= 10
-  w = Decimal(code % 10)
-  code /= 10
-  r = Decimal(code % 10)
-  code /= 10
-  v = Decimal(code % 10)
-  code /= 10
-  q = Decimal(code % 10)
-  code /= 10
-  u = Decimal(code % 100)
-  code /= 100
-  p = Decimal(code)
+  code = ('0' + str(int(mesh_code)))[-10:]
+  # ppuuqvrwsx
+  p = float(code[0:2])
+  u = float(code[2:4])
+  q = float(code[4:5])
+  v = float(code[5:6])
+  r = float(code[6:7])
+  w = float(code[7:8])
+  s = float(code[8:9])
+  x = float(code[9:10])
 
   log.debug([p, u, q, v, r, w, s, x])
-  s = (d40 * p) / d60 + (d5 * q) / d60 + (d30 * r + d3 * s) / d60 / d60
-  w = d100 + u + (d7_5 * v) / d60 + (d45 * w + d4_5 * x) / d60 / d60
+  s = (40.0 * p) / 60.0 + (5.0 * q) / 60.0 + (30.0 * r + 3.0 * s) / 60.0 / 60.0
+  w = 100.0 + u + (7.5 * v) / 60.0 + (45.0 * w + 4.5 * x) / 60.0 / 60.0
   
-  n = s + d3 / d60 / d60
-  e = w + d4_5 / d60 / d60
+  n = s + 3.0 / 60.0 / 60.0
+  e = w + 4.5 / 60.0 / 60.0
 
   return [float(s), float(w), float(n), float(e)]
 
 
 def latLngToMeshCode(lat, lng):
   # lat
-  t = Decimal(lat) * d60
-  a = t % d40
-  p = t // d40
+  t = float(lat) * 60.0
+  a = t % 40.0
+  p = int(t // 40.0)
 
-  b = a % d5
-  q = a // d5
+  b = a % 5.0
+  q = int(a // 5.0)
 
-  t = b * d60
-  c = t % d30
-  r = t // d30
+  t = b * 60.0
+  c = t % 30.0
+  r = int(t // 30.0)
 
-  d = c % d3
-  s = c // d3
+  d = c % 3.0
+  s = int(c // 3.0)
 
   # lng
-  t = Decimal(lng) - d100
-  f = t % d1
-  u = t // d1
+  t = float(lng) - 100.0
+  f = t % 1.0
+  u = int(t // 1.0)
 
-  t = f * d60
-  g = t % d7_5
-  v = t // d7_5
+  t = f * 60.0
+  g = t % 7.5
+  v = int(t // 7.5)
 
-  t = g * d60
-  h = t % d45
-  w = t // d45
+  t = g * 60.0
+  h = t % 45.0
+  w = int(t // 45.0)
 
-  i = h % d4_5
-  x = h // d4_5
+  i = h % 4.5
+  x = int(h // 4.5)
 
   result = p
-  result *= d100
+  result *= 100
   result += u
-  result *= d10
+  result *= 10
   result += q
-  result *= d10
+  result *= 10
   result += v
-  result *= d10
+  result *= 10
   result += r
-  result *= d10
+  result *= 10
   result += w
-  result *= d10
+  result *= 10
   result += s
-  result *= d10
+  result *= 10
   result += x
 
   return int(result)
