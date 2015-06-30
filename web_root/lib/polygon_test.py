@@ -251,7 +251,7 @@ class TestPolyMerger(unittest.TestCase):
     results = PolyMerger.mergePolys(polys)
     self.assertEquals(len(results), 1)
     self.assertListEqual(results[0].toPolygonArray(),
-                         [[1, 1], [0, 1], [0, 4], [1, 4]])
+                         [[1, 1], [0, 1], [0, 4], [1, 4], [1, 1]])
                          
     polys = []
     polys.append(Poly.createPolyFromRect(Rect(0, 1, 1, 4)))
@@ -259,18 +259,18 @@ class TestPolyMerger(unittest.TestCase):
     results = PolyMerger.mergePolys(polys)
     self.assertEquals(len(results), 1)
     self.assertListEqual(results[0].toPolygonArray(),
-                         [[2, 0], [1, 0], [1, 1], [0, 1], [0, 4], [1, 4], [1, 2], [2, 2]])
+                         [[2, 0], [1, 0], [1, 1], [0, 1], [0, 4], [1, 4],
+                          [1, 2], [2, 2], [2, 0]])
 
     polys = []
     polys.append(Poly.createPolyFromRect(Rect(0, 1, 1, 4)))
     polys.append(Poly.createPolyFromRect(Rect(1, 0, 2, 2)))
     polys.append(Poly.createPolyFromRect(Rect(1, 3, 2, 5)))
     results = PolyMerger.mergePolys(polys)
-    self.assertEquals(len(results), 2)
+    self.assertEquals(len(results), 1)
     self.assertListEqual(results[0].toPolygonArray(),
-                         [[2, 0], [1, 0], [1, 1], [0, 1], [0, 4], [1, 4], [1, 5], [2, 5]])
-    self.assertListEqual(results[1].toPolygonArray(),
-                         [[2, 3], [1, 3], [1, 2], [2, 2]])
+                         [[2, 3], [1, 3], [1, 2], [2, 2], [2, 0], [1, 0], [1, 1],
+                          [0, 1], [0, 4], [1, 4], [1, 5], [2, 5], [2, 3]])
 
     polys = []
     polys.append(Poly.createPolyFromRect(Rect(0, 1, 1, 4)))
@@ -281,7 +281,7 @@ class TestPolyMerger(unittest.TestCase):
     self.assertEquals(len(results), 1)
     self.assertListEqual(results[0].toPolygonArray(),
                          [[3, 4], [2, 4], [2, 3], [1, 3], [1, 2], [2, 2], [2, 0], [1, 0], [1, 1],
-                          [0, 1], [0, 4], [1, 4], [1, 5], [2, 5], [2, 6], [3, 6]])
+                          [0, 1], [0, 4], [1, 4], [1, 5], [2, 5], [2, 6], [3, 6], [3, 4]])
 
     # polygon with a hole
     polys = []
@@ -292,9 +292,36 @@ class TestPolyMerger(unittest.TestCase):
     results = PolyMerger.mergePolys(polys)
     self.assertEquals(len(results), 1)
     self.assertListEqual(results[0].toPolygonArray(),
-                         [[3, 1], [2, 1], [2, 0], [1, 0], [1, 1],
-                          [0, 1], [0, 4], [1, 4], [1, 5], [2, 5], [2, 4], [3, 4]])
+                         [[3, 1], [2, 1], [2, 0], [1, 0], [1, 1], [0, 1], [0, 4],
+                          [1, 4], [1, 5], [2, 5], [2, 4], [3, 4], [3, 1]])
 
+    polys = []
+    polys.append(Poly.createPolyFromRect(Rect(0, 1, 1, 2)))
+    polys.append(Poly.createPolyFromRect(Rect(0, 3, 1, 4)))
+    polys.append(Poly.createPolyFromRect(Rect(1, 1, 2, 2)))
+    polys.append(Poly.createPolyFromRect(Rect(1, 3, 2, 4)))
+    polys.append(Poly.createPolyFromRect(Rect(2, 1, 3, 2)))
+    results = PolyMerger.mergePolys(polys)
+    self.assertEquals(len(results), 2)
+    self.assertListEqual(results[0].toPolygonArray(),
+                         [[2, 3], [1, 3], [0, 3], [0, 4], [1, 4], [2, 4], [2, 3]])
+    self.assertListEqual(results[1].toPolygonArray(),
+                         [[3, 1], [2, 1], [1, 1], [0, 1], [0, 2],
+                          [1, 2], [2, 2], [3, 2], [3, 1]])
+
+    polys = []
+    polys.append(Poly.createPolyFromRect(Rect(0, 1, 1, 2)))
+    polys.append(Poly.createPolyFromRect(Rect(0, 3, 1, 4)))
+    polys.append(Poly.createPolyFromRect(Rect(1, 1, 2, 4)))
+    polys.append(Poly.createPolyFromRect(Rect(2, 1, 3, 2)))
+    polys.append(Poly.createPolyFromRect(Rect(2, 3, 3, 4)))
+    polys.append(Poly.createPolyFromRect(Rect(3, 1, 4, 2)))
+    results = PolyMerger.mergePolys(polys)
+    self.assertEquals(len(results), 1)
+    self.assertListEqual(results[0].toPolygonArray(),
+                         [[4, 1], [3, 1], [2, 1], [1, 1], [0, 1], [0, 2], [1, 2],
+                          [1, 3], [0, 3], [0, 4], [1, 4], [2, 4], [3, 4], [3, 3],
+                          [2, 3], [2, 2], [3, 2], [4, 2], [4, 1]])
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr)

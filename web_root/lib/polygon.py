@@ -108,7 +108,7 @@ class Poly:
     self.west = None
     self.north = None
     self.east = None
-    self.root = None
+    self.group = None
     self.finalized = False
 
   @staticmethod
@@ -120,7 +120,6 @@ class Poly:
     _poly.west = rect.west
     _poly.north = rect.north
     _poly.east = rect.east
-    _poly.root = _poly
     return _poly
 
   def updateCoords(self):
@@ -141,6 +140,8 @@ class Poly:
   def addPolys(self, polys):
     if self.finalized:
       raise Exception('Already finalized')
+    if not self.group:
+      self.group = self
     isTouchingAnything = False
     for target in polys:
       if not self.isTouching(target):
@@ -151,8 +152,8 @@ class Poly:
       else:
         target.path.tail.next.next.connectPrev(self.path.tail.prev)
       self.path.tail.connectPrev(target.path.tail.next)
-      if target.root.south > self.root.south:
-        target.root = self.root
+      if not target.group:
+        target.group = self.group
       target.updateCoords()
     self.updateCoords()
 
@@ -178,7 +179,7 @@ class Poly:
     return result
 
   def isSamePoly(self, target):
-    return self.root == target.root
+    return self.group == target.group
 
 
 class PolyMerger:
@@ -205,33 +206,38 @@ class PolyMerger:
   @staticmethod
   def mergePolys(polys):
     results = []
-    prev = None
-    curr = []
+    prev_line = None
+    curr_line = []
+
     for poly in polys:
-      if (len(curr) == 0 or f_equals(curr[-1].north, poly.north)):
-        curr.append(poly)
-      elif prev is None:
-        prev = curr
-        curr = [poly]
+      if (len(curr_line) == 0 or f_equals(curr_line[-1].north, poly.north)):
+        curr_line.append(poly)
+      elif prev_line is None:
+        prev_line = curr_line
+        curr_line = [poly]
       else:
-        for poly0 in prev:
-          if (not poly0.addPolys(curr)):
+        for poly0 in prev_line:
+          if (not poly0.addPolys(curr_line)):
+            # if the current poly0 doesn't touch any next polys
             poly0.finalize()
             results[:] = [x for x in results if not x.isSamePoly(poly0)]
             results.append(poly0)
-        prev = curr
-        curr = [poly]
+        prev_line = curr_line
+        curr_line = [poly]
 
-    if not prev is None:
-      for poly0 in prev:
-        if (not poly0.addPolys(curr)):
+    # northanmost line
+    if not prev_line is None:
+      for poly0 in prev_line:
+        if (not poly0.addPolys(curr_line)):
+          # if the current poly0 doesn't touch any next polys
           poly0.finalize()
           results[:] = [x for x in results if not x.isSamePoly(poly0)]
           results.append(poly0)
 
-    for poly0 in curr:
+    for poly0 in curr_line:
+      poly0.finalize()
       results[:] = [x for x in results if not x.isSamePoly(poly0)]
+      results.append(poly0)
 
-    results.extend(curr)
     return results
 
