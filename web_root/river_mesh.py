@@ -4,6 +4,7 @@ import webapp2
 import json
 import polygon
 import mesh_code
+import mesh
 
 
 class River(webapp2.RequestHandler):
@@ -63,25 +64,24 @@ class RiverMesh(webapp2.RequestHandler):
     else:
       db = MySQLdb.connect(host='localhost', user='root')
 
-    query = ('select min_lng, min_lat, max_lng, max_lat'
-             ' from kanto_mesh'
-             ' where river_code = %(code)s'
-             ' order by min_lat, min_lng'
+    query = ('select mesh.modified_mesh_code'
+             ' from compact_kanto_mesh as mesh'
+             ' where mesh.river_code = %(code)s'
+             ' order by mesh.modified_mesh_code'
             )
     cursor = db.cursor()
     cursor.execute(query, {'code':code})
 
-    # phase 1.
-    # Merging squares horizontally if it's connecting each other.
-    polys = polygon.PolyMerger.mergeSquares(cursor);
+    code_list = []
+    for row in cursor:
+      code_list.append(row[0])
 
-    # phase2
-    result = polygon.PolyMerger.mergePolys(polys)
+    result = mesh.MeshMerger.merge(code_list)
+    lls = [map(lambda y: mesh_code.modifiedMeshCodeToLatLng(y), x) for x in result]
 
     self.response.write('%(callback)s && %(callback)s(%(json)s);\n'
                         % {'callback':str(callback),
-                           'json':json.dumps(map(lambda x:x.toPolygonArray(),
-                                                 result))})
+                           'json':json.dumps(lls)})
     db.close()
 
 

@@ -86,14 +86,28 @@ class MeshMerger:
     start_points = []
     for code in code_list:
       mesh = Mesh.get(code)
-      touching_list = [mesh_hash[x.code] for x in [mesh.south(),
-                                                   mesh.north(),
-                                                   mesh.east(),
-                                                   mesh.west()] if x.code in mesh_hash]
-      touching_list.append(mesh)
-      start_points[:] = [x for x in start_points if x not in touching_list]
-      mesh_hash[code] = min(touching_list)
-      start_points.append(mesh_hash[code])
+
+      south = mesh.south()
+      west = mesh.west()
+      hasS = south.code in mesh_hash
+      hasW = west.code in mesh_hash
+
+      minimum = [mesh]
+      if hasS and mesh_hash[south.code][0] <= minimum[0]:
+        minimum = mesh_hash[south.code]
+      if hasW and mesh_hash[west.code][0] <= minimum[0]:
+        minimum = mesh_hash[west.code]
+
+      mesh_hash[mesh.code] = minimum
+
+      start_points[:] = [x for x in start_points if ((not hasS or x != mesh_hash[south.code][0]) and
+                                                     (not hasW or x != mesh_hash[west.code][0]))]
+      start_points.append(minimum[0])
+
+      if hasS:
+        mesh_hash[south.code][0] = minimum[0]
+      if hasW:
+        mesh_hash[west.code][0] = minimum[0]
 
     # 2nd phase: trace edge
     lines = []

@@ -68,9 +68,9 @@ def modifiedMeshCodeToMeshCode(modified_mesh_code):
   return int(result)
 
 
-def modifiedMeshCodeToSWNE(modified_mesh_code):
+def modifiedMeshCodeToLatLng(modified_mesh_code):
   mesh_code = modifiedMeshCodeToMeshCode(modified_mesh_code)
-  return meshCodeToSWNE(mesh_code)
+  return meshCodeToLatLng(mesh_code)
 
 
 def latLngToModifiedMeshCode(lat, lng):
@@ -78,7 +78,7 @@ def latLngToModifiedMeshCode(lat, lng):
   return meshCodeToModifiedMeshCode(mesh_code)
 
 
-def meshCodeToSWNE(mesh_code):
+def meshCodeToLatLng(mesh_code):
   code = ('0' + str(int(mesh_code)))[-10:]
   # ppuuqvrwsx
   p = float(code[0:2])
@@ -90,14 +90,13 @@ def meshCodeToSWNE(mesh_code):
   s = float(code[8:9])
   x = float(code[9:10])
 
-  log.debug([p, u, q, v, r, w, s, x])
   s = (40.0 * p) / 60.0 + (5.0 * q) / 60.0 + (30.0 * r + 3.0 * s) / 60.0 / 60.0
   w = 100.0 + u + (7.5 * v) / 60.0 + (45.0 * w + 4.5 * x) / 60.0 / 60.0
   
   n = s + 3.0 / 60.0 / 60.0
   e = w + 4.5 / 60.0 / 60.0
 
-  return [float(s), float(w), float(n), float(e)]
+  return [float(s), float(w)]
 
 
 def latLngToMeshCode(lat, lng):
