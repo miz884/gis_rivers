@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>雨のゆき先マップ 関東編</title>
+    <title>日本全国 雨の行く先マップ</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <style>
@@ -56,15 +56,10 @@ var polygon;
 var kml_layer;
 var infowindow;
 
-var BASE_URL = 'http://6.mizba-gsi-project-94804.appspot.com';
+var BASE_URL = 'http://7.mizba-gsi-project-94804.appspot.com';
 var GET_RIVER_SERVICE_URL = BASE_URL + '/get_river?';
 var GET_RIVER_MESH_SERVICE_URL = BASE_URL + '/get_river_mesh?';
 var KMZ_BASE_URL = 'https://storage.googleapis.com/gis_rivers/river_path/';
-
-var MIN_LAT = 35.33333333568889;
-var MIN_LNG = 139;
-var MAX_LAT = 36.000000002385164;
-var MAX_LNG = 140.00000000001108;
 
 var getRiverCBName = null;
 var getRiverMeshCBName = null;
@@ -73,7 +68,7 @@ var CBs = [];
 function initialize() {
   map = new google.maps.Map(document.getElementById('map-canvas'), {
     zoom: 8,
-    center: new google.maps.LatLng((MIN_LAT+MAX_LAT)/2.0, (MIN_LNG+MAX_LNG)/2.0),
+    center: new google.maps.LatLng(37, 140),
     mapTypeId: google.maps.MapTypeId.TERRAIN,
     zoomControlOptions: {
       position: google.maps.ControlPosition.RIGHT
@@ -89,26 +84,17 @@ function initialize() {
   });
   infowindow = new google.maps.InfoWindow();
 
-  var targetArea = new google.maps.Rectangle({
-    strokeColor: '#FF0000',
-    strokeOpacity: 0.8,
-    strokeWeight: 2,
-    fillOpacity: 0.0,
-    map: map,
-    bounds: new google.maps.LatLngBounds(
-      new google.maps.LatLng(MIN_LAT, MIN_LNG),
-      new google.maps.LatLng(MAX_LAT, MAX_LNG))
-  });
-  google.maps.event.addListener(targetArea, 'click', function(click) {
+  google.maps.event.addListener(map, 'click', function(click) {
     selectPoint(click.latLng);
     window.location.hash = click.latLng.lng() + '%7C' + click.latLng.lat();
   });
-  map.fitBounds(targetArea.getBounds());
 
   if (window.location.hash) {
     var m = window.location.hash.substr(1).match(/^(\d*\.\d*)(\||%7C)(\d*\.\d*)$/);
     if (m) {
-      selectPoint(new google.maps.LatLng(m[3], m[1]));
+      var location = new google.maps.LatLng(m[3], m[1]);
+      selectPoint(location);
+      map.setCenter(location);
     }
   }
 }
@@ -161,7 +147,7 @@ function getRiverCB(name, code) {
     CBs[getRiverMeshCBName] = getRiverMeshCB;
     loadScript(GET_RIVER_MESH_SERVICE_URL +
         'code=' + code + '&callback=CBs.' + getRiverMeshCBName);
-    kml_layer.setUrl(KMZ_BASE_URL + code + '.kmz?'); //  + new Date().getTime());
+    kml_layer.setUrl(KMZ_BASE_URL + ('00000' + code).substr(-10) + '.kmz?');
     kml_layer.setMap(map);
   }
   infowindow.setContent(name);
@@ -213,9 +199,9 @@ google.maps.event.addDomListener(window, 'load', initialize);
   </head>
   <body>
     <div id="title">
-      <h1>雨のゆき先マップ 関東編</h1>
+      <h1>日本全国 雨の行く先マップ</h1>
       <p><span>クリックした場所に降った雨が流れこむ川の名前、かたち、雨を集める範囲がわかります。
-        表示まで5秒くらいかかります。</span></p>
+         </span></p>
       <p>このページは<a href="http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html">国土交通省の国土数値情 流域メッシュデータ</a> を利用しています。</p>
     </div>
     <div id="map-canvas"></div>

@@ -21,13 +21,13 @@ class River(webapp2.RequestHandler):
 
     if (os.getenv('SERVER_SOFTWARE') and
       os.getenv('SERVER_SOFTWARE').startswith('Google App Engine/')):
-      db = MySQLdb.connect(unix_socket='/cloudsql/mizba-gsi-project-94804:kanto-rivers',
-                           user='root', db='kanto_rivers', charset='utf8')
+      db = MySQLdb.connect(unix_socket='/cloudsql/mizba-gsi-project-94804:river-mesh',
+                           user='root', db='river_mesh', charset='utf8')
     else:
       db = MySQLdb.connect(host='localhost', user='root')
 
     query = ('select river.name, mesh.river_code '
-             ' from compact_kanto_mesh as mesh'
+             ' from river_mesh as mesh'
              ' left join river_codes as river'
              ' on mesh.river_code = river.river_code'
              ' where mesh.modified_mesh_code = %(modified_mesh_code)s'
@@ -59,13 +59,13 @@ class RiverMesh(webapp2.RequestHandler):
 
     if (os.getenv('SERVER_SOFTWARE') and
       os.getenv('SERVER_SOFTWARE').startswith('Google App Engine/')):
-      db = MySQLdb.connect(unix_socket='/cloudsql/mizba-gsi-project-94804:kanto-rivers',
-                           user='root', db='kanto_rivers', charset='utf8')
+      db = MySQLdb.connect(unix_socket='/cloudsql/mizba-gsi-project-94804:river-mesh',
+                           user='root', db='river_mesh', charset='utf8')
     else:
       db = MySQLdb.connect(host='localhost', user='root')
 
     query = ('select mesh.modified_mesh_code'
-             ' from compact_kanto_mesh as mesh'
+             ' from river_mesh as mesh'
              ' where mesh.river_code = %(code)s'
              ' order by mesh.modified_mesh_code'
             )
