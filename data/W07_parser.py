@@ -11,14 +11,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..
 
 from mesh_code import *
 
-RESULT_FILE = '/tmp/W07_river_mesh.csv'
-
 def main():
-  if not os.path.isfile(RESULT_FILE):
-    f = open(RESULT_FILE, 'w')
-  else:
-    f = open(RESULT_FILE, 'a')
 
+  print('modified_mesh_code,river_code')
+  pattern = re.compile(r'^(\d*),(\d*),(\d*),([^,]*),([^,]*),(\d*)$')
   for line in sys.stdin:
     line = line.strip()
     '''
@@ -48,14 +44,12 @@ def main():
     </ksj:ValleyMesh>
     -----------------------------------
     '''
-    match = re.match(r'^(\d*),(\d*),(\d*),([^,]*),([^,]*),(\d*)$', line)
+    match = pattern.match(line)
     if match:
       mesh_code = match.group(1)
       river_code = match.group(3)
       modified_mesh_code = meshCodeToModifiedMeshCode(mesh_code)
-      f.write('%d,%s\n' % (modified_mesh_code, river_code))
-
-  f.close()
+      print('%d,%s' % (modified_mesh_code, river_code))
 
 if __name__=="__main__":
   main()

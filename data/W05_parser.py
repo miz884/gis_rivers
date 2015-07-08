@@ -8,7 +8,7 @@ import codecs
 
 sys.stdout = codecs.getwriter('utf_8')(sys.stdout)
 
-BASE_DIR = '/tmp/W05_river_path/'
+BASE_DIR = './result/W05_river_path_data/'
 
 
 def main():

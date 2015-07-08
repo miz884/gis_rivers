@@ -13,6 +13,33 @@ http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html
 
 
 ===============
+W05 processing river flow path
+===============
+01. Put all downloaded files (W05-**_**_GML.zip) in ./W05_river_path directory.
+
+02. Execute batch_W05.sh
+It processes all ./W05_river_path/W05*.zip files by using W05_parser.py.
+It writes the results into ./result/W05_river_path_data/<RIVER_CODE>.data files.
+
+03. Execute batch_W05_kmlgen.sh
+It actually generates KMZ files even its name is KMLgen.
+It reads files from ./result/W05_river_path_data/ and generates a KML file by using W05_kmlgen.py.
+It writes the results in /tmp/ directory.
+It zip the KML file into a KMZ file.
+Eventually, it writes the KMZ files in ./result/W05_river_path_kmz/<RIVER_CODE>.kmz.
+
+
+===============
+W07 processing basin area mesh
+===============
+01. Put all downloaded files (W07-*_*-jgd_GML.zip) in ./W07_river_mesh directory.
+
+02. Execute batch_W07.sh
+It processs all ./W07_river_mesh/W07*.zip files by using W07_parser.py.
+The W07_parser.py writes the results into ./result/W07_river_mesh/<RIVER_CODE>.csv files.
+
+
+===============
 How to import data into Google Cloud SQL?
 ===============
 

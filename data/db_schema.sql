@@ -27,7 +27,13 @@ SET character_set_client = utf8;
 -- KEY idx_river_code (river_code)
 -- ) DEFAULT CHARSET=utf8;
 
-truncate compact_kanto_mesh;
+-- truncate compact_kanto_mesh;
+
+CREATE TABLE river_mesh (
+  modified_mesh_code BIGINT,
+  river_code         BIGINT,
+  PRIMARY KEY(modified_mesh_code, river_code)
+) DEFAULT CHARSET=utf8;
 
 SET character_set_client = @saved_cs_client;
 

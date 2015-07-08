@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FROM_PATH=./result/W05_river_path_kml/
+FROM_PATH=./result/W05_river_path_data/
 TO_PATH=./result/W05_river_path_kmz/
 
 function kmzgen {

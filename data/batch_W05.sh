@@ -13,6 +13,6 @@ if [ -d /tmp/W05_river_path ]; then
 fi
 mkdir /tmp/W05_river_path
 
-find . -name 'W05*.zip' -exec bash -c "parse {}" \;
+find . -type f -name 'W05*.zip' -exec bash -c "parse {}" \;
 
 
