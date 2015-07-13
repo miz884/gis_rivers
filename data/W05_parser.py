@@ -35,7 +35,7 @@ def main():
     </gml:Curve>
     -----------------------------------
     '''
-    match = re.match(r'<gml:Curve gml:id="(c-\d*)">', line)
+    match = re.match(r'<gml:Curve gml:id="(c-?\d*)">', line)
     if match:
       curr_curve_id = match.group(1)
       if not curr_curve_id in curves:
@@ -67,7 +67,7 @@ def main():
     </ksj:Stream>
     -----------------------------------
     '''
-    match = re.match(r'<ksj:location xlink:href="#(c-\d*)"/>', line)
+    match = re.match(r'<ksj:location xlink:href="#(c-?\d*)"/>', line)
     if match:
       curr_curve_ref = match.group(1)
 
@@ -82,8 +82,10 @@ def main():
     if match:
       curr_curve_ref = None
 
+  sys.stderr.write('River count %d\n' % (len(streams)))
+
   for code, paths in streams.iteritems():
-    filename = BASE_DIR + code + '.data'
+    filename = BASE_DIR + ('00000' + str(code))[-10:] + '.data'
     f = None
     if not os.path.isfile(filename):
       f = open(filename, 'w')

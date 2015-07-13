@@ -7,11 +7,7 @@ function parse {
 }
 export -f parse
 
-if [ -d /tmp/W05_river_path ]; then
-  echo "/tmp/W05_river_path already exists."  >&2
-  exit
-fi
-mkdir /tmp/W05_river_path
+mkdir ./result/W05_river_path_data
 
 find . -type f -name 'W05*.zip' -exec bash -c "parse {}" \;
 

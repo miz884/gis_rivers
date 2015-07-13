@@ -68,7 +68,7 @@ var CBs = [];
 function initialize() {
   map = new google.maps.Map(document.getElementById('map-canvas'), {
     zoom: 8,
-    center: new google.maps.LatLng(37, 140),
+    center: new google.maps.LatLng(35.5, 139.5),
     mapTypeId: google.maps.MapTypeId.TERRAIN,
     zoomControlOptions: {
       position: google.maps.ControlPosition.RIGHT
@@ -147,7 +147,8 @@ function getRiverCB(name, code) {
     CBs[getRiverMeshCBName] = getRiverMeshCB;
     loadScript(GET_RIVER_MESH_SERVICE_URL +
         'code=' + code + '&callback=CBs.' + getRiverMeshCBName);
-    kml_layer.setUrl(KMZ_BASE_URL + ('00000' + code).substr(-10) + '.kmz?');
+    code_str = ('00000' + code).substr(-10);
+    kml_layer.setUrl(KMZ_BASE_URL + code_str.substr(0, 2) + '/' + code_str + '.kmz?');
     kml_layer.setMap(map);
   }
   infowindow.setContent(name);
