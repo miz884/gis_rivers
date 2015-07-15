@@ -1,5 +1,5 @@
 application: mizba-gsi-project-94804
-version: 7
+version: 8
 runtime: python27
 api_version: 1
 threadsafe: yes
@@ -8,9 +8,16 @@ handlers:
 - url: /kml
   static_dir: kml
 
+- url: /bower_components
+  static_dir: bower_components
+
 - url: /favicon\.ico
   static_files: favicon.ico
   upload: favicon\.ico
+
+- url: /
+  static_files: map.html
+  upload: map\.html
 
 - url: /map\.html
   static_files: map.html

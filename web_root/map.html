@@ -1,40 +1,72 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src='bower_components/webcomponentsjs/webcomponents-lite.min.js'></script>
+    <link rel='import' href='bower_components/iron-icons/iron-icons.html'>
+    <link rel='import' href='bower_components/iron-icons/maps-icons.html'>
+    <link rel='import' href='bower_components/paper-button/paper-button.html'>
+    <link rel='import' href='bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html'>
+    <link rel='import' href='bower_components/paper-dialog/paper-dialog.html'>
+    <link rel='import' href='bower_components/paper-fab/paper-fab.html'>
+    <link rel='import' href='bower_components/paper-header-panel/paper-header-panel.html'>
+    <link rel='import' href='bower_components/paper-styles/paper-styles.html'>
+    <link rel='import' href='bower_components/paper-toast/paper-toast.html'>
+
     <title>日本全国 雨の行く先マップ</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <style>
-      html, body, #map-canvas {
+    <style is='custom-style'>
+      html, body {
         height: 100%;
         margin: 0px;
         padding: 0px
       }
-      #title {
-        padding: 3px;
-        background: #fff;
-        position: absolute;
-        top: 0px;
-        left: 0px;
-        z-index: 100;
+      html, #map-canvas {
         font-family: sans-serif;
       }
-      #title {
-        max-width: 400px;
-      }
-      #title div,
-      #title p {
-        font-size: 8pt;
-        padding: 0px;
-        margin: 1px;
+      .paper-header {
+        color: white;
+        background-color: var(--paper-light-blue-400);
       }
       h1 {
         font-size: 15pt;
         padding: 0px;
         margin: 1px;
       }
+      paper-fab {
+        --paper-fab-background: var(--paper-red-500);
+        --paper-fab-keyboard-focus-background: var(--paper-red-900);
+      }
+      #fab-container {
+        position: absolute;
+        right: 10px;
+        margin: 10px;
+      }
+      paper-button.colorful {
+        background: var(--paper-light-blue-400);
+        color: white;
+      }
+      paper-dialog {
+        padding: 5px;
+      }
+      paper-dialog > *{
+        margin: 1px;
+        padding: 1px;
+      }
+      dt {
+        font-weight: bold;
+        margin-top: 5px;
+      }
+      #help {
+        width: 80%;
+        max-width: 400px;
+      }
+      #search {
+        width: 100%;
+        max-width: 400px;
+      }
     </style>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
     <script>
 
 var DEBUG = false;
@@ -55,8 +87,9 @@ var marker;
 var polygon;
 var kml_layer;
 var infowindow;
+var addressAutocomplete;
 
-var BASE_URL = 'http://7.mizba-gsi-project-94804.appspot.com';
+var BASE_URL = 'http://8.mizba-gsi-project-94804.appspot.com';
 var GET_RIVER_SERVICE_URL = BASE_URL + '/get_river?';
 var GET_RIVER_MESH_SERVICE_URL = BASE_URL + '/get_river_mesh?';
 var KMZ_BASE_URL = 'https://storage.googleapis.com/gis_rivers/river_path/';
@@ -70,11 +103,14 @@ function initialize() {
     zoom: 8,
     center: new google.maps.LatLng(35.5, 139.5),
     mapTypeId: google.maps.MapTypeId.TERRAIN,
+    disableDefaultUI: true,
+    zoomControl: true,
     zoomControlOptions: {
-      position: google.maps.ControlPosition.RIGHT
+      position: google.maps.ControlPosition.RIGHT_BOTTOM
     },
-    panControlOptions: {
-      position: google.maps.ControlPosition.RIGHT
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      position: google.maps.ControlPosition.RIGHT_BOTTOM
     },
   });
 
@@ -85,18 +121,49 @@ function initialize() {
   infowindow = new google.maps.InfoWindow();
 
   google.maps.event.addListener(map, 'click', function(click) {
-    selectPoint(click.latLng);
-    window.location.hash = click.latLng.lng() + '%7C' + click.latLng.lat();
+    selectLocation(click.latLng, true);
+  });
+  google.maps.event.addListener(map, 'zoom_changed', function() {
+    updateHash();
+  });
+  google.maps.event.addListener(map, 'center_changed', function() {
+    updateHash();
   });
 
   if (window.location.hash) {
-    var m = window.location.hash.substr(1).match(/^(\d*\.\d*)(\||%7C)(\d*\.\d*)$/);
-    if (m) {
-      var location = new google.maps.LatLng(m[3], m[1]);
-      selectPoint(location);
-      map.setCenter(location);
+    var decoded = decodeHash(window.location.hash);
+    if (decoded) {
+      if (decoded.location) {
+        selectLocation(decoded.location, false);
+      }
+      if (decoded.center) {
+        map.setCenter(decoded.center);
+      }
+      if (decoded.zoom) {
+        map.setZoom(decoded.zoom);
+      }
     }
   }
+
+  addressAutocomplete = new google.maps.places.Autocomplete(
+       document.getElementById('address'),
+       {componentRestrictions: {country: 'jp'}});
+  google.maps.event.addListener(addressAutocomplete, 'place_changed',
+      function() {
+        var geometry = addressAutocomplete.getPlace().geometry;
+        if (!geometry) {
+          return;
+        }
+        var dialog = document.getElementById('search');
+        dialog.close();
+        if (geometry.viewport) {
+          map.fitBounds(geometry.viewport);
+        } else {
+          map.setCenter(geometry.location);
+        }
+        selectLocation(geometry.location, true);
+      }
+  );
 }
 
 function loadScript(url) {
@@ -107,7 +174,7 @@ function loadScript(url) {
   head.appendChild(script);
 }
 
-function selectPoint(latLng) {
+function selectLocation(latLng, toUpdateHash) {
   if (DEBUG) {
     for (var i in DEBUG_GLOBALS.markers) {
       DEBUG_GLOBALS.markers[i].setMap(null);
@@ -132,12 +199,15 @@ function selectPoint(latLng) {
   marker.setPosition(latLng);
   marker.setMap(map);
   infowindow.close();
+  if (toUpdateHash) {
+    updateHash();
+  }
 }
 
 function getRiverCB(name, code) {
   console.log("river code: " + code);
   if (!name) {
-    name = 'unknown'
+    name = '不明'
   } else {
     // setup callback
     if (getRiverMeshCBName) {
@@ -196,16 +266,137 @@ function getRiverMeshCB(polys) {
 
 google.maps.event.addDomListener(window, 'load', initialize);
 
+function openDialog(id) {
+  var dialog = document.getElementById(id);
+  if (dialog) {
+    dialog.open();
+  }
+}
+
+function getCurrentLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        var location = new google.maps.LatLng(position.coords.latitude,
+          position.coords.longitude);
+        map.setZoom(13);
+        selectLocation(location, true);
+      },
+      function(error) {
+        document.getElementById('current_location_failed').show();
+        console.error(error);
+      });
+  } else {
+    document.getElementById('current_location_failed').show();
+    console.error('navigator.geolocation is not supported.');
+  }
+}
+
+function updateHash() {
+  var result = '';
+  var location = marker.getPosition();
+  if (location) {
+    result +=  '' + location.lat() + ';' + location.lng();
+  }
+  var center = map.getCenter();
+  var zoom = map.getZoom();
+  var at = '@' + center.lat() + ';' + center.lng() + ';' + zoom + ';';
+  result += at;
+  window.location.hash = result;
+  return result;
+}
+
+function decodeHash(hash) {
+  var result = {};
+  var s = hash.substr(1).split(/@/);
+  if (s.length > 0) {
+    var s0 = s[0].split(/;/);
+    if (s0.length >= 2) {
+      result.location = new google.maps.LatLng(s0[0], s0[1]);
+    }
+  }
+  if (s.length > 1) {
+    var s0 = s[1].split(/;/);
+    if (s0.length >= 3) {
+      result.center = new google.maps.LatLng(s0[0], s0[1]);
+      result.zoom = Number(s0[2]);
+    }
+  }
+  return result;
+}
+
     </script>
   </head>
-  <body>
-    <div id="title">
-      <h1>日本全国 雨の行く先マップ</h1>
-      <p><span>クリックした場所に降った雨が流れこむ川の名前、かたち、雨を集める範囲がわかります。
-         </span></p>
-      <p>このページは<a href="http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html">国土交通省の国土数値情 流域メッシュデータ</a> を利用しています。</p>
-    </div>
-    <div id="map-canvas"></div>
+  <body class='fullbleed layout vertical'>
+    <paper-header-panel>
+      <div id="title" class='paper-header'>
+        <h1 class='flex' >日本全国 雨の行く先マップ</h1>
+      </div>
+      <div id="map-canvas" class='fit'></div>
+
+      <div id='fab-container'>
+      <paper-fab icon='search' name='検索' mini onclick='openDialog("search")'></paper-fab>
+      <paper-fab icon='maps:my-location' mini onclick='getCurrentLocation()'></paper-fab>
+      <paper-fab icon='help' mini onclick='openDialog("help")'></paper-fab>
+      </div>
+
+      <paper-toast id='current_location_failed' text='今いる場所がわかりませんでした'></paper-toast>
+
+      <paper-dialog id='search'>
+        住所や場所の名前などを入力してください<br />
+        <input autofocus type='text' size='50' name='address' id='address'>
+        <div class='buttons'>
+          <paper-button raised onclick='document.getElementById("address").value=""' class=''>クリア</paper-button>
+          <paper-button dialog-dismiss raised class='colorful'>閉じる</paper-button>
+        </div>
+      </paper-dialog>
+
+      <paper-dialog id='help'>
+        <paper-dialog-scrollable>
+          <dl>
+            <dt>これは何をするアプリなの？</dt>
+            <dd>日本国内の川の名前、かたち、その川が雨を集めるエリアがわかるアプリです。</dd>
+            <dt>場所をえらぶ - クリック / タップ</dt>
+            <dd>地図をクリックするかタップすると、その場所に降った雨が流れこむ川の名前、かたち、その川が雨を集めるエリアがわかります。<br />
+              赤くて太い線が川のかたちです。
+              ピンク色のエリアに降った雨はその川に集まります。
+            </dd>
+            <dt>
+<iron-icon icon='search'></iron-icon>
+場所を見つける
+</dt>
+            <dd>クリック / タップ以外にも、住所や名前で場所を見つけることができます。
+              <ol>
+                <li>地図の上の虫めがねボタン<iron-icon icon='search'></iron-icon>をクリック / タップします</li>
+                <li>テキストボックスに住所や場所の名前などを入力します</li>
+                <li>住所や場所の候補が表示されるのでクリック / タップしてください</li>
+              </ol>
+            </dd>
+            <dt>
+<iron-icon icon='maps:my-location'></iron-icon>
+今いる場所を見つける
+</dt>
+            <dd>地図の上の<iron-icon icon='maps:my-location'></iron-icon>ボタンをクリック / タップすると、今いる場所を見つけることができます。</dd>
+            <dt>川の名前「不明」って？</dt>
+            <dd>残念ながら、その場所に降った雨が流れ込む川が分かりませんでした。
+              大きな町や平らな土地など、降った雨がどちらに流れるのか分らない場所があります。
+            </dd>
+            <dt>川の名前 None って？</dt>
+            <dd>小さな川や、人間が作った川（例 : 農業用水）など、名前がついていない川です。<br />
+              細かくは国土交通省が作成した<a href='http://nlftp.mlit.go.jp/ksj/gml/codelist/RiverCodeCd.html'>河川コード種別</a>に記載がないものは None と表示されます。
+            </dd>
+            <dt>使っているデータ</dt>
+            <dd>このページは<a href='http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-W07.html'>国土交通省の国土数値情 流域メッシュデータ</a> を使っています。</dd>
+            <dt>連絡先</dt>
+            <dd>このアプリについてお問い合わせ、問題のご報告などがありましたら rivers<script>document.write(String.fromCharCode(0x40));</script>mizba.net までお願いします。</dd>
+          </dl>
+        </paper-dialog-scrollable>
+        <div class='buttons'>
+          <paper-button dialog-confirm autofocus raised class='colorful'>OK</paper-button>
+        </div>
+      </paper-dialog>
+
+    </paper-header-panel>
   </body>
 </html>
 

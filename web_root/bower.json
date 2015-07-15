@@ -1,0 +1,27 @@
+{
+  "name": "web_root",
+  "version": "0.0.0",
+  "homepage": "https://github.com/miz884/gis_rivers",
+  "moduleType": [
+    "globals",
+    "node"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "iron-iconset": "PolymerElements/iron-iconset#~1.0.2",
+    "paper-dialog": "PolymerElements/paper-dialog#~1.0.1",
+    "paper-button": "PolymerElements/paper-button#~1.0.3",
+    "paper-header-panel": "PolymerElements/paper-header-panel#~1.0.2",
+    "paper-fab": "PolymerElements/paper-fab#~1.0.3",
+    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#~1.0.1",
+    "paper-toast": "PolymerElements/paper-toast#~1.0.0"
+  }
+}
