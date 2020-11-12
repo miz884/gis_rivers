@@ -1,5 +1,3 @@
-application: mizba-gsi-project-94804
-version: 8
 runtime: python27
 api_version: 1
 threadsafe: yes
