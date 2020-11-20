@@ -5,9 +5,19 @@ import json
 import polygon
 import mesh_code
 import mesh
+import mesh_indexer
+import pickle
 
 
 class River(webapp2.RequestHandler):
+  def _get_river_name(self, river_code):
+    with open("./W07_river_mesh_index/river_code_index.dump", mode="rb") as f:
+      index = pickle.load(f)
+      if int(river_code) in index:
+        return index[int(river_code)]
+      else:
+        return None
+
   def get(self):
     self.response.headers['Content-Type'] = 'text/javascript'
 
@@ -19,31 +29,17 @@ class River(webapp2.RequestHandler):
       self.response.write('%s && %s(false)\n' % (str(callback), str(callback)))
       return
 
-    if (os.getenv('SERVER_SOFTWARE') and
-      os.getenv('SERVER_SOFTWARE').startswith('Google App Engine/')):
-      db = MySQLdb.connect(unix_socket='/cloudsql/mizba-gsi-project-94804:river-mesh',
-                           user='root', db='river_mesh', charset='utf8')
-    else:
-      db = MySQLdb.connect(host='localhost', user='root')
 
-    query = ('select river.name, mesh.river_code '
-             ' from river_mesh as mesh'
-             ' left join river_codes as river'
-             ' on mesh.river_code = river.river_code'
-             ' where mesh.modified_mesh_code = %(modified_mesh_code)s'
-            )
+    index_facade = mesh_indexer.MeshIndexFacade("./W07_river_mesh_index")
     modified_mesh_code = mesh_code.latLngToModifiedMeshCode(lat, lng)
-    cursor = db.cursor()
-    count = cursor.execute(query, {'modified_mesh_code': modified_mesh_code})
+    river_code = index_facade.search_by_modified_mesh_code(modified_mesh_code)
 
-    if count > 0:
-      for row in cursor.fetchall():
-        self.response.write('%s && %s("%s", %d);\n'
-                            % (str(callback), str(callback), row[0], row[1]))
-    else:
+    if river_code is None:
       self.response.write('%s && %s(null);\n' % (str(callback), str(callback)))
-
-    db.close()
+    else:
+      river_name = self._get_river_name(river_code)
+      self.response.write('%s && %s("%s", %s);\n'
+                          % (str(callback), str(callback), river_name, river_code))
 
 
 class RiverMesh(webapp2.RequestHandler):
