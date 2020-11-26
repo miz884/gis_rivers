@@ -1,3 +1,4 @@
+import cloudstorage as gcs
 import webapp2
 import json
 import mesh_code
@@ -50,9 +51,9 @@ class RiverMesh(webapp2.RequestHandler):
       self.response.write('%s && %s(false)\n' % (str(callback), str(callback)))
       return
 
-    data_file = "./data/river_mesh_list/%s/%s" % (code[0:2], code)
+    gs_path = "/gis_rivers/river_mesh_list/%s/%s" % (code[0:2], code)
     code_list = []
-    with open(data_file, mode="r") as f:
+    with gcs.open(gs_path) as f:
       for line in f:
         code_list.append(int(line))
 
