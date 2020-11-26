@@ -16,6 +16,10 @@ handlers:
   static_files: map.html
   upload: map\.html
 
+- url: /api_key\.js
+  static_files: api_key.js
+  upload: api_key\.js
+
 - url: /.*
   script: auto
 

@@ -4,3 +4,4 @@
 **/*.swq
 bower_components/
 data/
+api_key.js

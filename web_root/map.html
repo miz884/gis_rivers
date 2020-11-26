@@ -79,9 +79,15 @@
       ga('create', 'UA-35430412-4', 'auto');
       ga('send', 'pageview');
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
     <script>
-
+function loadMapsApi(key) {
+  var s_tag = document.createElement("script");
+  s_tag.src ="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places&callback=initialize&key=" + key;
+  document.body.appendChild(s_tag);
+}
+    </script>
+    <script src="api_key.js"></script>
+    <script>
 var DEBUG = false;
 var DEBUG_GLOBALS = {};
 if (window && window.location && window.location.protocol == "file:") {
@@ -280,8 +286,6 @@ function getRiverMeshCB(polys) {
     }
   }
 }
-
-google.maps.event.addDomListener(window, 'load', initialize);
 
 function openDialog(id) {
   var dialog = document.getElementById(id);
