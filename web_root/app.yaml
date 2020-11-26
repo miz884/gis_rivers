@@ -1,11 +1,6 @@
-runtime: python27
-api_version: 1
-threadsafe: yes
+runtime: python38
 
 handlers:
-- url: /kml
-  static_dir: kml
-
 - url: /bower_components
   static_dir: bower_components
 
@@ -21,14 +16,6 @@ handlers:
   static_files: map.html
   upload: map\.html
 
-- url: /get_river
-  script: river_mesh.app
+- url: /.*
+  script: auto
 
-- url: /get_river_mesh
-  script: river_mesh.app
-
-libraries:
-- name: webapp2
-  version: "2.5.2"
-- name: MySQLdb
-  version: "latest"

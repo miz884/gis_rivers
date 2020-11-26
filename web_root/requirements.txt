@@ -1,0 +1,4 @@
+Flask
+google-cloud-storage==1.24.1
+googleapis_common_protos
+protobuf>=3.14.0
