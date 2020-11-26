@@ -1,0 +1,6 @@
+**/*.pyc
+**/*.swo
+**/*.swp
+**/*.swq
+bower_components/
+data/
