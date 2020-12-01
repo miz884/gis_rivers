@@ -23,8 +23,8 @@ app = Flask(__name__)
 def _get_river_name(river_code):
   with open("./data/W07_river_mesh_index/river_code_index.dump", mode="rb") as f:
     index = pickle.load(f, encoding='utf-8')
-    if int(river_code) in index:
-      return index[int(river_code)]
+    if river_code in index:
+      return index[river_code]
     else:
       return None
 
@@ -47,10 +47,10 @@ def get_river():
                     content_type = 'text/javascript')
   else:
     river_name = _get_river_name(river_code)
-    return Response('%s && %s("%s", %s);\n' % (str(callback),
-                                               str(callback),
-                                               river_name,
-                                               river_code),
+    return Response('%s && %s("%s", "%s");\n' % (str(callback),
+                                                 str(callback),
+                                                 river_name,
+                                                 river_code),
                     content_type = 'text/javascript')
 
 
