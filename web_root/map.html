@@ -314,15 +314,21 @@ function getCurrentLocation() {
   }
 }
 
+function truncateLatLng(latLng) {
+  return Math.round(latLng * 1000000) / 1000000;
+}
+
 function updateHash() {
   var result = '';
   var location = marker.getPosition();
   if (location) {
-    result +=  '' + location.lat() + ';' + location.lng();
+    result +=  '' + truncateLatLng(location.lat())
+      + ';' + truncateLatLng(location.lng());
   }
   var center = map.getCenter();
   var zoom = map.getZoom();
-  var at = '@' + center.lat() + ';' + center.lng() + ';' + zoom + ';';
+  var at = '@' + truncateLatLng(center.lat())
+    + ';' + truncateLatLng(center.lng()) + ';' + zoom + ';';
   result += at;
   window.location.hash = result;
   return result;
