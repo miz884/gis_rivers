@@ -17,8 +17,7 @@ from flask import request
 from flask import Response
 from google.cloud import storage
 
-
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='/')
 
 def _get_river_name(river_code):
   with open("./data/W07_river_mesh_index/river_code_index.dump", mode="rb") as f:
