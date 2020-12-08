@@ -103,7 +103,7 @@ function debug(message) {
 
 var map;
 var marker;
-var polygon;
+var polygons = [];
 var kml_layer;
 var infowindow;
 var addressAutocomplete;
@@ -112,10 +112,12 @@ var BASE_URL = 'https://mizba-gsi-project-94804.appspot.com';
 var BASE_URL = '';
 var GET_RIVER_SERVICE_URL = BASE_URL + '/get_river?';
 var GET_RIVER_MESH_SERVICE_URL = BASE_URL + '/get_river_mesh?';
+var GET_WATER_SYSTEM_MESH_SERVICE_URL = BASE_URL + '/get_water_system_mesh?';
 var KMZ_BASE_URL = 'https://storage.googleapis.com/gis_rivers/river_path/';
 
 var getRiverCBName = null;
 var getRiverMeshCBName = null;
+var getWaterSystemMeshCBName = null;
 var CBs = [];
 
 function initialize() {
@@ -205,10 +207,11 @@ function selectLocation(latLng, toUpdateHash) {
     }
     DEBUG_GLOBALS.markers = []
   }
-  // hidden overlays
-  if (polygon) {
-    polygon.setMap(null);
+  // Hide overlays.
+  for (var i = 0; i < polygons.length; ++i) {
+    polygons[i].setMap(null);
   }
+  polygons = [];
   kml_layer.setMap(null);
   // setup callback
   if (getRiverCBName) {
@@ -233,14 +236,23 @@ function getRiverCB(name, code) {
   if (!name) {
     name = '不明'
   } else {
-    // setup callback
+    // Load river mesh.
     if (getRiverMeshCBName) {
       CBs[getRiverMeshCBName] = null;
     }
     getRiverMeshCBName = 'cb' + (new Date()).getTime();
-    CBs[getRiverMeshCBName] = getRiverMeshCB;
+    CBs[getRiverMeshCBName] = getMeshRendererCB('#ff0000', 0.35);
     loadScript(GET_RIVER_MESH_SERVICE_URL +
         'code=' + code + '&callback=CBs.' + getRiverMeshCBName);
+     // Load water system mesh.
+    if (getWaterSystemMeshCBName) {
+      CBs[getWaterSystemMeshCBName] = null;
+    }
+    getWaterSystemMeshCBName = 'cbws' + (new Date()).getTime();
+    CBs[getWaterSystemMeshCBName] = getMeshRendererCB('#8888ff', 0.3);
+    loadScript(GET_WATER_SYSTEM_MESH_SERVICE_URL +
+        'code=' + code + '&callback=CBs.' + getWaterSystemMeshCBName);
+    // Load KML layer.
     code_str = ('00000' + code).substr(-10);
     kml_layer.setUrl(KMZ_BASE_URL + code_str.substr(0, 2) + '/' + code_str + '.kmz?');
     kml_layer.setMap(map);
@@ -249,43 +261,42 @@ function getRiverCB(name, code) {
   infowindow.open(map, marker);
 }
 
-function getRiverMeshCB(polys) {
-  if (polys.length == 0) {
-    return;
-  }
-  var paths = [];
-  for (var i in polys) {
-    var poly = polys[i];
-    var path = [];
-    for (var j in poly) {
-      path.push({lat:poly[j][0], lng:poly[j][1]});
+function getMeshRendererCB(fill_color, fill_opacity) {
+  return function(polys) {
+    if (polys.length == 0) {
+      return;
     }
-    paths.push(path);
-  }
+    var paths = [];
+    for (var i in polys) {
+      var poly = polys[i];
+      var path = [];
+      for (var j in poly) {
+        path.push({lat:poly[j][0], lng:poly[j][1]});
+      }
+      paths.push(path);
+    }
 
-  // rendering polygons
-  var poly_opt = {
-    strokeWeight: (DEBUG ? 1.0 : 0.0),
-    fillColor: '#FF0000',
-    fillOpacity: 0.35,
-    map: map,
-    paths: paths
+    // rendering polygons
+    var poly_opt = {
+      strokeWeight: (DEBUG ? 1.0 : 0.0),
+      fillColor: fill_color,
+      fillOpacity: fill_opacity,
+      map: map,
+      paths: paths
+    };
+    polygons.push(new google.maps.Polygon(poly_opt));
+
+    if (DEBUG) {
+      for (var i in paths) {
+        var m = new google.maps.Marker({
+          map: map,
+          position: paths[i][0],
+          title: ("index " + i)
+        });
+        DEBUG_GLOBALS.markers.push(m);
+      }
+    }
   };
-  if (polygon) {
-    polygon.setMap(null);
-  }
-  polygon = new google.maps.Polygon(poly_opt);
-
-  if (DEBUG) {
-    for (var i in paths) {
-      var m = new google.maps.Marker({
-        map: map,
-        position: paths[i][0],
-        title: ("index " + i)
-      });
-      DEBUG_GLOBALS.markers.push(m);
-    }
-  }
 }
 
 function openDialog(id) {

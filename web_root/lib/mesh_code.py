@@ -77,7 +77,6 @@ def latLngToModifiedMeshCode(lat, lng):
   mesh_code = latLngToMeshCode(lat, lng)
   return meshCodeToModifiedMeshCode(mesh_code)
 
-
 def meshCodeToLatLng(mesh_code):
   code = ('0' + str(int(mesh_code)))[-10:]
   # ppuuqvrwsx
@@ -90,13 +89,14 @@ def meshCodeToLatLng(mesh_code):
   s = float(code[8:9])
   x = float(code[9:10])
 
-  s = (40.0 * p) / 60.0 + (5.0 * q) / 60.0 + (30.0 * r + 3.0 * s) / 60.0 / 60.0
-  w = 100.0 + u + (7.5 * v) / 60.0 + (45.0 * w + 4.5 * x) / 60.0 / 60.0
+  ss = (40.0 * p) / 60.0 + (5.0 * q) / 60.0 + (30.0 * r + 3.0 * s) / 60.0 / 60.0
+  ww = 100.0 + u + (7.5 * v) / 60.0 + (45.0 * w + 4.5 * x) / 60.0 / 60.0
   
-  n = s + 3.0 / 60.0 / 60.0
-  e = w + 4.5 / 60.0 / 60.0
+  # To get North and East.
+  # nn = ss + 3.0 / 60.0 / 60.0
+  # ee = ww + 4.5 / 60.0 / 60.0
 
-  return [float(s), float(w)]
+  return [round(float(ss), 6), round(float(ww), 6)]
 
 
 def latLngToMeshCode(lat, lng):

@@ -63,6 +63,31 @@ def get_river_mesh():
                     content_type = 'text/javascript')
 
   blob_name = "river_mesh_list/%s/%s" % (code[0:2], code)
+  print(blob_name)
+  client = storage.Client(project='mizba-gsi-project-94804')
+  bucket = client.bucket("gis_rivers")
+  blob = bucket.blob(blob_name)
+  content = blob.download_as_string()
+  code_list = list(map(lambda y: int(y), content.splitlines()))
+
+  result = mesh.MeshMerger.merge(code_list)
+  lls = [list(map(lambda y: mesh_code.modifiedMeshCodeToLatLng(y), x)) for x in result]
+
+  return Response(('%(callback)s && %(callback)s(%(json)s);\n' %
+                    {'callback':str(callback), 'json':json.dumps(lls)}),
+                    content_type = 'text/javascript')
+
+@app.route('/get_water_system_mesh')
+def get_water_system_mesh():
+  code = str(request.args.get('code'))
+  callback = str(request.args.get('callback'))
+
+  if (code == ''):
+    return Response('%s && %s(false)\n' % (str(callback), str(callback)),
+                    content_type = 'text/javascript')
+
+  blob_name = "water_system_mesh_list/%s/%s" % (code[0:2], code[0:6])
+  print(blob_name)
   client = storage.Client(project='mizba-gsi-project-94804')
   bucket = client.bucket("gis_rivers")
   blob = bucket.blob(blob_name)
